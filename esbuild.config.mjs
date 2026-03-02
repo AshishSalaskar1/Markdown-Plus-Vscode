@@ -12,7 +12,7 @@ const extensionConfig = {
   external: ["vscode"],
   bundle: true,
   minify: isProduction,
-  sourcemap: true,
+  sourcemap: !isProduction,
 };
 
 /** @type {import('esbuild').BuildOptions} */
@@ -23,7 +23,7 @@ const webviewConfig = {
   format: "iife",
   bundle: true,
   minify: isProduction,
-  sourcemap: true,
+  sourcemap: !isProduction,
   loader: {
     ".css": "css",
     ".woff2": "dataurl",

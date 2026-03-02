@@ -1,5 +1,23 @@
 import * as vscode from 'vscode';
 import { getWebviewHtml } from './utils/html';
+import { broadcastTheme, getActiveTheme } from './themes';
+
+/** Read the persisted font size from configuration. */
+export function getActiveFontSize(): number {
+  return vscode.workspace
+    .getConfiguration('markdownPlus')
+    .get<number>('fontSize', 16);
+}
+
+/** Send a font-size change message to all open webview panels. */
+export function broadcastFontSize(
+  panels: vscode.WebviewPanel[],
+  fontSize: number,
+): void {
+  for (const panel of panels) {
+    panel.webview.postMessage({ type: 'fontSizeChange', fontSize });
+  }
+}
 
 /**
  * CustomTextEditorProvider that drives the Markdown Plus WYSIWYG editor.
@@ -17,16 +35,43 @@ import { getWebviewHtml } from './utils/html';
 export class MarkdownPlusEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = 'markdownPlus.editor';
 
+  /** All currently open webview panels, used for theme broadcasting. */
+  private readonly activePanels = new Set<vscode.WebviewPanel>();
+
   /**
    * Register this provider with VS Code and return a Disposable that
    * tears it down when the extension deactivates.
    */
-  public static register(context: vscode.ExtensionContext): vscode.Disposable {
-    return vscode.window.registerCustomEditorProvider(
+  public static register(context: vscode.ExtensionContext): {
+    disposable: vscode.Disposable;
+    provider: MarkdownPlusEditorProvider;
+  } {
+    const provider = new MarkdownPlusEditorProvider(context);
+
+    // Broadcast theme and font-size changes from settings to all open panels
+    context.subscriptions.push(
+      vscode.workspace.onDidChangeConfiguration((e) => {
+        if (e.affectsConfiguration('markdownPlus.theme')) {
+          broadcastTheme([...provider.activePanels], getActiveTheme());
+        }
+        if (e.affectsConfiguration('markdownPlus.fontSize')) {
+          broadcastFontSize([...provider.activePanels], getActiveFontSize());
+        }
+      }),
+    );
+
+    const disposable = vscode.window.registerCustomEditorProvider(
       MarkdownPlusEditorProvider.viewType,
-      new MarkdownPlusEditorProvider(context),
+      provider,
       { webviewOptions: { retainContextWhenHidden: true } },
     );
+
+    return { disposable, provider };
+  }
+
+  /** Get all active webview panels (used by the theme command for live preview). */
+  public getActivePanels(): vscode.WebviewPanel[] {
+    return [...this.activePanels];
   }
 
   constructor(private readonly context: vscode.ExtensionContext) {}
@@ -110,12 +155,24 @@ export class MarkdownPlusEditorProvider implements vscode.CustomTextEditorProvid
       },
     );
 
+    // Track this panel for theme broadcasting
+    this.activePanels.add(webviewPanel);
+
     // --- Webview → Document sync ---
     const messageSubscription = webviewPanel.webview.onDidReceiveMessage(
       async (msg: { type: string; markdown?: string; version?: number }) => {
         switch (msg.type) {
           case 'ready':
             sendToWebview('init');
+            // Send the current theme and font size to the newly opened webview
+            webviewPanel.webview.postMessage({
+              type: 'themeChange',
+              theme: getActiveTheme(),
+            });
+            webviewPanel.webview.postMessage({
+              type: 'fontSizeChange',
+              fontSize: getActiveFontSize(),
+            });
             break;
 
           case 'edit': {
@@ -154,6 +211,7 @@ export class MarkdownPlusEditorProvider implements vscode.CustomTextEditorProvid
 
     // --- Cleanup ---
     webviewPanel.onDidDispose(() => {
+      this.activePanels.delete(webviewPanel);
       docChangeSubscription.dispose();
       messageSubscription.dispose();
     });

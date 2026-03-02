@@ -1,12 +1,16 @@
 .vscode/**
 .copilot-tracking/**
 .github/**
+.git/**
 src/**
 webview/**
 node_modules/**
 esbuild.config.mjs
 tsconfig.json
 tsconfig.webview.json
-*.map
+**/*.map
+*.vsix
 .gitignore
+CONTRIBUTING.md
+package-lock.json
 requirements.md

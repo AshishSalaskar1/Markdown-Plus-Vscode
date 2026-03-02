@@ -1,0 +1,351 @@
+/* ============================================================
+   Markdown Plus — Theme Definitions
+   Each theme overrides Crepe design tokens via data-theme
+   attribute selectors. The default "vscode" theme uses the
+   existing --vscode-* mappings in editor.css (no data-theme).
+   ============================================================ */
+
+/* ---- GitHub Light ---- */
+.milkdown[data-theme="github-light"] {
+  --crepe-color-background: #ffffff;
+  --crepe-color-on-background: #1f2328;
+  --crepe-color-surface: #f6f8fa;
+  --crepe-color-surface-low: #f6f8fa;
+  --crepe-color-on-surface: #1f2328;
+  --crepe-color-on-surface-variant: #656d76;
+  --crepe-color-outline: #d0d7de;
+  --crepe-color-primary: #0969da;
+  --crepe-color-secondary: #ddf4ff;
+  --crepe-color-on-secondary: #0969da;
+  --crepe-color-inverse: #24292f;
+  --crepe-color-on-inverse: #ffffff;
+  --crepe-color-inline-code: #0550ae;
+  --crepe-color-error: #cf222e;
+  --crepe-color-hover: rgba(208, 215, 222, 0.32);
+  --crepe-color-selected: #ddf4ff;
+  --crepe-color-inline-area: #f6f8fa;
+  --crepe-shadow-1: 0 1px 3px rgba(31, 35, 40, 0.12);
+  --crepe-shadow-2: 0 3px 6px rgba(31, 35, 40, 0.12);
+}
+
+body[data-theme="github-light"] {
+  background: #ffffff !important;
+  color: #1f2328 !important;
+}
+
+/* ---- GitHub Dark ---- */
+.milkdown[data-theme="github-dark"] {
+  --crepe-color-background: #0d1117;
+  --crepe-color-on-background: #e6edf3;
+  --crepe-color-surface: #161b22;
+  --crepe-color-surface-low: #0d1117;
+  --crepe-color-on-surface: #e6edf3;
+  --crepe-color-on-surface-variant: #8b949e;
+  --crepe-color-outline: #30363d;
+  --crepe-color-primary: #58a6ff;
+  --crepe-color-secondary: #1f2937;
+  --crepe-color-on-secondary: #58a6ff;
+  --crepe-color-inverse: #e6edf3;
+  --crepe-color-on-inverse: #0d1117;
+  --crepe-color-inline-code: #79c0ff;
+  --crepe-color-error: #f85149;
+  --crepe-color-hover: rgba(48, 54, 61, 0.5);
+  --crepe-color-selected: rgba(56, 139, 253, 0.15);
+  --crepe-color-inline-area: #161b22;
+  --crepe-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --crepe-shadow-2: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+body[data-theme="github-dark"] {
+  background: #0d1117 !important;
+  color: #e6edf3 !important;
+}
+
+/* ---- Dracula ---- */
+.milkdown[data-theme="dracula"] {
+  --crepe-color-background: #282a36;
+  --crepe-color-on-background: #f8f8f2;
+  --crepe-color-surface: #343746;
+  --crepe-color-surface-low: #21222c;
+  --crepe-color-on-surface: #f8f8f2;
+  --crepe-color-on-surface-variant: #6272a4;
+  --crepe-color-outline: #44475a;
+  --crepe-color-primary: #bd93f9;
+  --crepe-color-secondary: #44475a;
+  --crepe-color-on-secondary: #f8f8f2;
+  --crepe-color-inverse: #f8f8f2;
+  --crepe-color-on-inverse: #282a36;
+  --crepe-color-inline-code: #ff79c6;
+  --crepe-color-error: #ff5555;
+  --crepe-color-hover: rgba(68, 71, 90, 0.5);
+  --crepe-color-selected: rgba(189, 147, 249, 0.2);
+  --crepe-color-inline-area: #343746;
+  --crepe-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --crepe-shadow-2: 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+body[data-theme="dracula"] {
+  background: #282a36 !important;
+  color: #f8f8f2 !important;
+}
+
+/* ---- Nord ---- */
+.milkdown[data-theme="nord"] {
+  --crepe-color-background: #2e3440;
+  --crepe-color-on-background: #d8dee9;
+  --crepe-color-surface: #3b4252;
+  --crepe-color-surface-low: #2e3440;
+  --crepe-color-on-surface: #d8dee9;
+  --crepe-color-on-surface-variant: #81a1c1;
+  --crepe-color-outline: #4c566a;
+  --crepe-color-primary: #88c0d0;
+  --crepe-color-secondary: #434c5e;
+  --crepe-color-on-secondary: #d8dee9;
+  --crepe-color-inverse: #eceff4;
+  --crepe-color-on-inverse: #2e3440;
+  --crepe-color-inline-code: #a3be8c;
+  --crepe-color-error: #bf616a;
+  --crepe-color-hover: rgba(76, 86, 106, 0.4);
+  --crepe-color-selected: rgba(136, 192, 208, 0.15);
+  --crepe-color-inline-area: #3b4252;
+  --crepe-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --crepe-shadow-2: 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+body[data-theme="nord"] {
+  background: #2e3440 !important;
+  color: #d8dee9 !important;
+}
+
+/* ---- Solarized Light ---- */
+.milkdown[data-theme="solarized-light"] {
+  --crepe-color-background: #fdf6e3;
+  --crepe-color-on-background: #657b83;
+  --crepe-color-surface: #eee8d5;
+  --crepe-color-surface-low: #fdf6e3;
+  --crepe-color-on-surface: #657b83;
+  --crepe-color-on-surface-variant: #93a1a1;
+  --crepe-color-outline: #d3cbb7;
+  --crepe-color-primary: #268bd2;
+  --crepe-color-secondary: #eee8d5;
+  --crepe-color-on-secondary: #586e75;
+  --crepe-color-inverse: #073642;
+  --crepe-color-on-inverse: #fdf6e3;
+  --crepe-color-inline-code: #d33682;
+  --crepe-color-error: #dc322f;
+  --crepe-color-hover: rgba(238, 232, 213, 0.6);
+  --crepe-color-selected: rgba(38, 139, 210, 0.12);
+  --crepe-color-inline-area: #eee8d5;
+  --crepe-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --crepe-shadow-2: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+body[data-theme="solarized-light"] {
+  background: #fdf6e3 !important;
+  color: #657b83 !important;
+}
+
+/* ---- Solarized Dark ---- */
+.milkdown[data-theme="solarized-dark"] {
+  --crepe-color-background: #002b36;
+  --crepe-color-on-background: #839496;
+  --crepe-color-surface: #073642;
+  --crepe-color-surface-low: #002b36;
+  --crepe-color-on-surface: #839496;
+  --crepe-color-on-surface-variant: #586e75;
+  --crepe-color-outline: #2a4e57;
+  --crepe-color-primary: #268bd2;
+  --crepe-color-secondary: #073642;
+  --crepe-color-on-secondary: #839496;
+  --crepe-color-inverse: #eee8d5;
+  --crepe-color-on-inverse: #002b36;
+  --crepe-color-inline-code: #d33682;
+  --crepe-color-error: #dc322f;
+  --crepe-color-hover: rgba(7, 54, 66, 0.6);
+  --crepe-color-selected: rgba(38, 139, 210, 0.2);
+  --crepe-color-inline-area: #073642;
+  --crepe-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --crepe-shadow-2: 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+body[data-theme="solarized-dark"] {
+  background: #002b36 !important;
+  color: #839496 !important;
+}
+
+/* ---- One Dark ---- */
+.milkdown[data-theme="one-dark"] {
+  --crepe-color-background: #282c34;
+  --crepe-color-on-background: #abb2bf;
+  --crepe-color-surface: #21252b;
+  --crepe-color-surface-low: #282c34;
+  --crepe-color-on-surface: #abb2bf;
+  --crepe-color-on-surface-variant: #5c6370;
+  --crepe-color-outline: #3e4451;
+  --crepe-color-primary: #61afef;
+  --crepe-color-secondary: #3e4451;
+  --crepe-color-on-secondary: #abb2bf;
+  --crepe-color-inverse: #abb2bf;
+  --crepe-color-on-inverse: #282c34;
+  --crepe-color-inline-code: #e06c75;
+  --crepe-color-error: #e06c75;
+  --crepe-color-hover: rgba(62, 68, 81, 0.5);
+  --crepe-color-selected: rgba(97, 175, 239, 0.15);
+  --crepe-color-inline-area: #21252b;
+  --crepe-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --crepe-shadow-2: 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+body[data-theme="one-dark"] {
+  background: #282c34 !important;
+  color: #abb2bf !important;
+}
+
+/* ---- Tokyo Night ---- */
+.milkdown[data-theme="tokyo-night"] {
+  --crepe-color-background: #1a1b26;
+  --crepe-color-on-background: #a9b1d6;
+  --crepe-color-surface: #24283b;
+  --crepe-color-surface-low: #1a1b26;
+  --crepe-color-on-surface: #a9b1d6;
+  --crepe-color-on-surface-variant: #565f89;
+  --crepe-color-outline: #3b4261;
+  --crepe-color-primary: #7aa2f7;
+  --crepe-color-secondary: #3b4261;
+  --crepe-color-on-secondary: #a9b1d6;
+  --crepe-color-inverse: #c0caf5;
+  --crepe-color-on-inverse: #1a1b26;
+  --crepe-color-inline-code: #bb9af7;
+  --crepe-color-error: #f7768e;
+  --crepe-color-hover: rgba(59, 66, 97, 0.5);
+  --crepe-color-selected: rgba(122, 162, 247, 0.15);
+  --crepe-color-inline-area: #24283b;
+  --crepe-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --crepe-shadow-2: 0 3px 6px rgba(0, 0, 0, 0.5);
+}
+
+body[data-theme="tokyo-night"] {
+  background: #1a1b26 !important;
+  color: #a9b1d6 !important;
+}
+
+/* ---- Gruvbox Light ---- */
+.milkdown[data-theme="gruvbox-light"] {
+  --crepe-color-background: #fbf1c7;
+  --crepe-color-on-background: #3c3836;
+  --crepe-color-surface: #ebdbb2;
+  --crepe-color-surface-low: #fbf1c7;
+  --crepe-color-on-surface: #3c3836;
+  --crepe-color-on-surface-variant: #7c6f64;
+  --crepe-color-outline: #bdae93;
+  --crepe-color-primary: #d65d0e;
+  --crepe-color-secondary: #ebdbb2;
+  --crepe-color-on-secondary: #3c3836;
+  --crepe-color-inverse: #3c3836;
+  --crepe-color-on-inverse: #fbf1c7;
+  --crepe-color-inline-code: #9d0006;
+  --crepe-color-error: #cc241d;
+  --crepe-color-hover: rgba(189, 174, 147, 0.4);
+  --crepe-color-selected: rgba(214, 93, 14, 0.12);
+  --crepe-color-inline-area: #ebdbb2;
+  --crepe-shadow-1: 0 1px 3px rgba(60, 56, 54, 0.12);
+  --crepe-shadow-2: 0 3px 6px rgba(60, 56, 54, 0.12);
+}
+
+body[data-theme="gruvbox-light"] {
+  background: #fbf1c7 !important;
+  color: #3c3836 !important;
+}
+
+/* ---- Gruvbox Dark ---- */
+.milkdown[data-theme="gruvbox-dark"] {
+  --crepe-color-background: #282828;
+  --crepe-color-on-background: #ebdbb2;
+  --crepe-color-surface: #3c3836;
+  --crepe-color-surface-low: #282828;
+  --crepe-color-on-surface: #ebdbb2;
+  --crepe-color-on-surface-variant: #a89984;
+  --crepe-color-outline: #504945;
+  --crepe-color-primary: #d65d0e;
+  --crepe-color-secondary: #504945;
+  --crepe-color-on-secondary: #ebdbb2;
+  --crepe-color-inverse: #ebdbb2;
+  --crepe-color-on-inverse: #282828;
+  --crepe-color-inline-code: #fb4934;
+  --crepe-color-error: #fb4934;
+  --crepe-color-hover: rgba(80, 73, 69, 0.5);
+  --crepe-color-selected: rgba(214, 93, 14, 0.2);
+  --crepe-color-inline-area: #3c3836;
+  --crepe-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --crepe-shadow-2: 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+body[data-theme="gruvbox-dark"] {
+  background: #282828 !important;
+  color: #ebdbb2 !important;
+}
+
+/* ---- Heading border color overrides for non-vscode themes ---- */
+.milkdown[data-theme] .ProseMirror h1,
+.milkdown[data-theme] .ProseMirror h2 {
+  border-bottom-color: var(--crepe-color-outline) !important;
+}
+
+/* ---- Link colors for non-vscode themes ---- */
+.milkdown[data-theme] .ProseMirror a {
+  color: var(--crepe-color-primary) !important;
+}
+
+/* ---- Blockquote border for non-vscode themes ---- */
+.milkdown[data-theme] .ProseMirror blockquote::before {
+  background: var(--crepe-color-outline) !important;
+}
+
+/* ---- Table borders for non-vscode themes ---- */
+.milkdown[data-theme] th,
+.milkdown[data-theme] td {
+  border-color: var(--crepe-color-outline) !important;
+}
+
+.milkdown[data-theme] th {
+  background: var(--crepe-color-surface) !important;
+}
+
+/* ---- Selection for non-vscode themes ---- */
+.milkdown[data-theme] .ProseMirror *::selection {
+  background: var(--crepe-color-selected) !important;
+}
+
+/* ---- HR for non-vscode themes ---- */
+.milkdown[data-theme] .ProseMirror hr {
+  border-top-color: var(--crepe-color-outline) !important;
+}
+
+/* ---- Code blocks for non-vscode themes ---- */
+.milkdown[data-theme] .ProseMirror code {
+  color: var(--crepe-color-inline-code) !important;
+  background: var(--crepe-color-inline-area) !important;
+}
+
+.milkdown[data-theme] .milkdown-code-block {
+  background: var(--crepe-color-surface) !important;
+}
+
+.milkdown[data-theme] .milkdown-code-block .cm-gutters {
+  color: var(--crepe-color-on-surface-variant) !important;
+}
+
+/* ---- Inline code text in pre blocks for non-vscode themes ---- */
+.milkdown[data-theme] .ProseMirror pre {
+  background: var(--crepe-color-surface) !important;
+}
+
+.milkdown[data-theme] .ProseMirror pre code {
+  color: var(--crepe-color-on-surface) !important;
+  background: transparent !important;
+}
+
+/* ---- Blockquote background for non-vscode themes ---- */
+.milkdown[data-theme] .ProseMirror blockquote {
+  background: var(--crepe-color-surface) !important;
+}

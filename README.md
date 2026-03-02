@@ -1,136 +1,196 @@
----
-title: Markdown Plus
-description: A WYSIWYG markdown editor extension for VS Code, inspired by Obsidian
-ms.date: 2026-03-02
-ms.topic: overview
-keywords:
-  - markdown
-  - wysiwyg
-  - vscode extension
-  - obsidian
-  - milkdown
----
-
 # Markdown Plus
 
-A WYSIWYG markdown editor extension for Visual Studio Code, inspired by [Obsidian](https://obsidian.md). Edit markdown files in a live, rich-text view where formatting renders instantly as you type, and every change syncs back to the underlying file in real time.
+![1.00](Markdown_Plus_Logo_v2.png)
+
+A WYSIWYG markdown editor for Visual Studio Code. Edit markdown files in a live, rich-text view where formatting renders instantly as you type, and every change syncs back to the underlying file in real time.
 
 ## Features
 
-* Live WYSIWYG editing of `.md` and `.markdown` files directly inside VS Code.
-* Bidirectional sync between the rich-text editor and the source file. Changes in either direction propagate instantly.
-* Triple-guard sync strategy prevents infinite edit loops and discards stale updates.
-* Dual-timer debounce (50 ms idle, 150 ms typing) keeps the UI responsive during rapid edits.
-* Right-click any markdown file in the Explorer or editor title bar and select "Open with Markdown Plus".
-* Open from the Command Palette with the `Open with Markdown Plus` command.
-* Relative image paths resolve correctly inside the editor (e.g., `![](./img.png)`).
-* Content Security Policy protects the webview while allowing Milkdown's inline styles.
+* **Live WYSIWYG editing** of `.md` and `.markdown` files directly inside VS Code.
+
+* **Slash commands** — type `/` at the start of a new line to open a quick-insert menu for headings, lists, code blocks, tables, images, and more.
+
+* **Editing toolbar** — a sleek formatting bar at the top of the editor lets you insert any Markdown element with a single click.
+
+* **Bidirectional sync** — changes in the rich-text editor propagate to the source file and vice versa, instantly.
+
+* **Smart debouncing** keeps the UI responsive during rapid edits.
+
+* **Relative image support** — paths like `![](./img.png)` resolve correctly in the editor.
+
+* **11 built-in themes** including GitHub Light/Dark, Dracula, Nord, One Dark, Tokyo Night, Solarized, and Gruvbox.
+
+* **Live theme preview** — browse themes with arrow keys before committing.
+
 * Built on [Milkdown Crepe](https://milkdown.dev/) for a lightweight, fast editing experience.
 
-## Prerequisites
+## Getting Started
 
-* [Node.js](https://nodejs.org/) v18 or later
-* [npm](https://www.npmjs.com/) v9 or later
-* [Visual Studio Code](https://code.visualstudio.com/) v1.85.0 or later
+### Opening a File
 
-## Development Setup
+Use any of these methods to open a markdown file in the WYSIWYG editor:
 
-### 1. Clone and install dependencies
+* **Explorer context menu** — right-click any `.md` file in the sidebar and select **Open with Markdown Plus**.
 
-```bash
-git clone https://github.com/<your-username>/markdown-plus.git
-cd markdown-plus
-npm install
-```
+* **Editor title menu** — right-click the editor tab and select **Open with Markdown Plus**.
 
-### 2. Build the extension
+* **Command Palette** — press `Ctrl+Shift+P` (`Cmd+Shift+P` on macOS) and run **Open with Markdown Plus**.
 
-Run a one-time build that compiles both the extension host code and the webview bundle into `dist/`:
-
-```bash
-npm run build
-```
-
-For continuous rebuilds during development, start the watch task:
-
-```bash
-npm run watch
-```
-
-### 3. Project structure
-
-| Path                           | Purpose                                        |
-|--------------------------------|------------------------------------------------|
-| `src/extension.ts`            | Extension entry point, command registration     |
-| `src/MarkdownPlusProvider.ts` | Custom editor provider with bidirectional sync  |
-| `src/utils/html.ts`           | Generates the webview HTML shell                |
-| `src/utils/nonce.ts`          | CSP nonce helper                                |
-| `webview/main.ts`             | Webview entry point, Milkdown Crepe setup       |
-| `webview/styles/editor.css`   | Custom editor styles                            |
-| `esbuild.config.mjs`          | Build configuration for extension and webview   |
-| `dist/`                        | Compiled output (extension.js, webview.js/css)  |
-
-## Running the Extension Locally
-
-### Using the Extension Development Host
-
-1. Open the `markdown-plus` folder in VS Code.
-2. Make sure the project is built (`npm run build` or have `npm run watch` running).
-3. Press `F5` (or go to **Run > Start Debugging**).
-   * This launches a new VS Code window called the **Extension Development Host** with the extension loaded.
-4. In the Extension Development Host window, open any `.md` file.
-5. Use one of these methods to activate the WYSIWYG editor:
-   * Right-click the file in the Explorer sidebar and select **Open with Markdown Plus**.
-   * Right-click the editor tab title and select **Open with Markdown Plus**.
-   * Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run **Open with Markdown Plus**.
-
-> [!TIP]
-> If you have `npm run watch` running, any code changes rebuild automatically. Reload the Extension Development Host window (`Ctrl+Shift+P` > **Developer: Reload Window**) to pick up changes.
-
-### Installing from a VSIX package
-
-To test the packaged extension outside the development host:
-
-1. Package the extension:
-
-   ```bash
-   npm run package
-   ```
-
-   This produces a `markdown-plus-0.1.0.vsix` file in the project root.
-
-2. Install the VSIX in VS Code:
-
-   ```bash
-   code --install-extension markdown-plus-0.1.0.vsix
-   ```
-
-3. Reload VS Code, then open any markdown file and use the **Open with Markdown Plus** command.
-
-### Setting Markdown Plus as the default editor
-
-After installing the extension, you can make it the default editor for markdown files:
+### Setting as the Default Editor
 
 1. Open any `.md` file.
-2. Click the editor selector in the top-right corner of the editor (or run `View: Reopen Editor With...` from the Command Palette).
+2. Click the editor selector in the top-right corner (or run **View: Reopen Editor With...** from the Command Palette).
 3. Select **Markdown Plus** from the list.
-4. Optionally, click **Configure default editor for '*.md'** and choose **Markdown Plus** to open all markdown files with it by default.
+4. Optionally, click **Configure default editor for '\*.md'** and choose **Markdown Plus** to always open markdown files with it.
 
-## Scripts Reference
+## Changing Themes
 
-| Script                | Command              | Description                                     |
-|-----------------------|----------------------|-------------------------------------------------|
-| Build                 | `npm run build`      | One-time build of extension and webview          |
-| Watch                 | `npm run watch`      | Continuous rebuild on file changes               |
-| Prepublish            | `npm run vscode:prepublish` | Production build (minified)               |
-| Package               | `npm run package`    | Create a `.vsix` file for distribution           |
+1. Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`).
+2. Run **Markdown Plus: Change Theme**.
+3. Use the arrow keys to live-preview each theme, then press Enter to apply.
 
-## Technology Stack
+You can also set the theme in VS Code Settings under `markdownPlus.theme`.
 
-* [Milkdown](https://milkdown.dev/) (Crepe) for the WYSIWYG editor
-* [esbuild](https://esbuild.github.io/) for bundling
-* [TypeScript](https://www.typescriptlang.org/) for type safety
-* VS Code [Custom Editor API](https://code.visualstudio.com/api/extension-guides/custom-editors) for the editor integration
+### Available Themes
+
+| Theme           | Style |
+| --------------- | ----- |
+| GitHub Light    | Light |
+| GitHub Dark     | Dark  |
+| Dracula         | Dark  |
+| Nord            | Dark  |
+| One Dark        | Dark  |
+| Tokyo Night     | Dark  |
+| Solarized Light | Light |
+| Solarized Dark  | Dark  |
+| Gruvbox Light   | Light |
+| Gruvbox Dark    | Dark  |
+| Default         | Light |
+
+## Supported Markdown Elements
+
+Markdown Plus renders all standard Markdown and GitHub Flavored Markdown (GFM) elements in the WYSIWYG editor. Type the syntax below and it renders instantly.
+
+### Text Formatting
+
+| Element       | Markdown Syntax         | Result                |
+| ------------- | ----------------------- | --------------------- |
+| Bold          | `**bold text**`         | **bold text**         |
+| Italic        | `*italic text*`         | *italic text*         |
+| Bold + Italic | `***bold and italic***` | ***bold and italic*** |
+| Strikethrough | `~~strikethrough~~`     | ~~strikethrough~~     |
+| Inline Code   | `` `code` ``            | `code`                |
+
+### Headings
+
+| Element   | Markdown Syntax    |
+| --------- | ------------------ |
+| Heading 1 | `# Heading 1`      |
+| Heading 2 | `## Heading 2`     |
+| Heading 3 | `### Heading 3`    |
+| Heading 4 | `#### Heading 4`   |
+| Heading 5 | `##### Heading 5`  |
+| Heading 6 | `###### Heading 6` |
+
+### Block Elements
+
+| Element         | Markdown Syntax                      | Notes                                    |
+| --------------- | ------------------------------------ | ---------------------------------------- |
+| Blockquote      | `> quoted text`                      | Nest with `>>` for deeper levels         |
+| Bullet List     | `- item` or `* item`                 | Indent with 2 spaces for nested items    |
+| Ordered List    | `1. item`                            | Numbers increment automatically          |
+| Task List       | `- [ ] todo` / `- [x] done`          | Checkboxes toggle on click in the editor |
+| Code Block      | ` ``` ` + language on a new line     | Syntax highlighting via CodeMirror       |
+| Horizontal Rule | `---` or `***`                       | Inserts a divider line                   |
+| Paragraph       | Plain text separated by a blank line | Default block type                       |
+| Hard Line Break | `Shift+Enter` or two trailing spaces | Forces a newline within a paragraph      |
+
+### Links and Images
+
+| Element | Markdown Syntax                    | Notes                                    |
+| ------- | ---------------------------------- | ---------------------------------------- |
+| Link    | `[text](https://url)`              | Tooltip appears on hover for editing     |
+| Image   | `![alt text](./path/to/image.png)` | Relative paths resolve from the file dir |
+
+### Tables
+
+Create tables using pipes and dashes:
+
+```text
+| Column A | Column B |
+|----------|----------|
+| Cell 1   | Cell 2   |
+```
+
+Use the table toolbar to add or remove rows and columns, and to set column alignment.
+
+### Math (LaTeX)
+
+| Element     | Syntax                 | Notes                        |
+| ----------- | ---------------------- | ---------------------------- |
+| Inline Math | `$E = mc^2$`           | Rendered inline with KaTeX   |
+| Block Math  | `$$\sum_{i=1}^n x_i$$` | Rendered as a centered block |
+
+## Keyboard Shortcuts
+
+> `Mod` is `Ctrl` on Windows/Linux and `Cmd` on macOS.
+
+### Text Formatting
+
+| Shortcut    | Action               |
+| ----------- | -------------------- |
+| `Mod+B`     | Toggle bold          |
+| `Mod+I`     | Toggle italic        |
+| `Mod+E`     | Toggle inline code   |
+| `Mod+Alt+X` | Toggle strikethrough |
+
+### Block Formatting
+
+| Shortcut      | Action                 |
+| ------------- | ---------------------- |
+| `Mod+Alt+1–6` | Convert to heading 1–6 |
+| `Mod+Alt+0`   | Convert to paragraph   |
+| `Mod+Shift+B` | Wrap in blockquote     |
+| `Mod+Shift+8` | Wrap in bullet list    |
+| `Mod+Shift+7` | Wrap in ordered list   |
+| `Mod+Shift+C` | Wrap in code block     |
+| `Shift+Enter` | Insert hard line break |
+
+### Table Navigation
+
+| Shortcut    | Action                                |
+| ----------- | ------------------------------------- |
+| `Mod+]`     | Move to next cell                     |
+| `Mod+[`     | Move to previous cell                 |
+| `Mod+Enter` | Exit table and insert paragraph below |
+
+### General
+
+| Shortcut | Action |
+| -------- | ------ |
+| `Mod+Z`  | Undo   |
+| `Mod+Y`  | Redo   |
+| `Mod+S`  | Save   |
+
+### Slash Commands
+
+Type `/` at the beginning of a new line to open the slash-command menu, which provides quick access to insert headings, lists, code blocks, tables, images, and more.
+
+## Font Size
+
+Adjust the editor font size with these commands (available in the Command Palette):
+
+| Command                               | Description              |
+| ------------------------------------- | ------------------------ |
+| **Markdown Plus: Increase Font Size** | Increase by 1 px         |
+| **Markdown Plus: Decrease Font Size** | Decrease by 1 px         |
+| **Markdown Plus: Reset Font Size**    | Reset to default (16 px) |
+
+You can also set the size directly in VS Code Settings under `markdownPlus.fontSize` (range: 8–40 px).
+
+## Requirements
+
+* Visual Studio Code v1.85.0 or later
 
 ## License
 
