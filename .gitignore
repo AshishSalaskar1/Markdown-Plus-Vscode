@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Packaged extension
+*.vsix
+
+# TypeScript
+*.tsbuildinfo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.idea/
+*.swp
+*.swo
+
+# Logs
+npm-debug.log*
+
+#hve-core files
+.copilot-tracking/
+.github

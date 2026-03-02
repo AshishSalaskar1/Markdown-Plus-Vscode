@@ -1,0 +1,397 @@
+/* ============================================================
+   Markdown Plus — VS Code Markdown-Preview-style theme
+   All colors derived from VS Code CSS variables so the editor
+   automatically matches light, dark, and high-contrast themes.
+   ============================================================ */
+
+/* ---------------------------------------------------------
+   1. Override Crepe design-token variables
+      Map every --crepe-color-* to its VS Code equivalent so
+      Crepe components (toolbars, code-mirror, list items)
+      inherit the active theme automatically.
+   --------------------------------------------------------- */
+
+.milkdown {
+  --crepe-color-background: var(--vscode-editor-background);
+  --crepe-color-on-background: var(--vscode-editor-foreground);
+  --crepe-color-surface: var(--vscode-textCodeBlock-background);
+  --crepe-color-surface-low: var(--vscode-editor-background);
+  --crepe-color-on-surface: var(--vscode-editor-foreground);
+  --crepe-color-on-surface-variant: var(--vscode-descriptionForeground);
+  --crepe-color-outline: var(--vscode-editorWidget-border, var(--vscode-contrastBorder, #444));
+  --crepe-color-primary: var(--vscode-textLink-foreground);
+  --crepe-color-secondary: var(--vscode-button-secondaryBackground, var(--vscode-editor-background));
+  --crepe-color-on-secondary: var(--vscode-button-secondaryForeground, var(--vscode-editor-foreground));
+  --crepe-color-inverse: var(--vscode-editor-foreground);
+  --crepe-color-on-inverse: var(--vscode-editor-background);
+  --crepe-color-inline-code: var(--vscode-editor-foreground);
+  --crepe-color-error: var(--vscode-errorForeground, #f44747);
+  --crepe-color-hover: var(--vscode-list-hoverBackground, rgba(128,128,128,.1));
+  --crepe-color-selected: var(--vscode-editor-selectionBackground);
+  --crepe-color-inline-area: var(--vscode-textCodeBlock-background);
+
+  /* Fonts — match VS Code markdown preview */
+  --crepe-font-title: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif);
+  --crepe-font-default: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif);
+  --crepe-font-code: var(--vscode-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace);
+
+  --crepe-shadow-1: none;
+  --crepe-shadow-2: none;
+}
+
+/* ---------------------------------------------------------
+   2. Global reset & base layout
+   --------------------------------------------------------- */
+
+html {
+  overflow: hidden;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  height: 100%;
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif);
+  font-size: var(--vscode-font-size, 14px);
+  line-height: 1.6;
+}
+
+/* ---------------------------------------------------------
+   3. Editor container
+   --------------------------------------------------------- */
+
+#editor {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ---------------------------------------------------------
+   4. Milkdown root overrides
+   --------------------------------------------------------- */
+
+.milkdown {
+  background: transparent !important;
+  color: inherit;
+}
+
+/* ---------------------------------------------------------
+   5. ProseMirror — reduce padding to match VS Code preview
+   --------------------------------------------------------- */
+
+.milkdown .ProseMirror {
+  padding: 16px 26px !important;
+  outline: none;
+  min-height: 100px;
+}
+
+.milkdown .ProseMirror:focus-visible {
+  outline: none;
+}
+
+/* ---------------------------------------------------------
+   6. Text selection
+   --------------------------------------------------------- */
+
+.milkdown .ProseMirror *::selection {
+  background: var(--vscode-editor-selectionBackground) !important;
+}
+
+/* ---------------------------------------------------------
+   7. Headings — VS Code markdown preview sizes & weight
+   --------------------------------------------------------- */
+
+.milkdown .ProseMirror h1,
+.milkdown .ProseMirror h2,
+.milkdown .ProseMirror h3,
+.milkdown .ProseMirror h4,
+.milkdown .ProseMirror h5,
+.milkdown .ProseMirror h6 {
+  font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif) !important;
+  font-weight: 600 !important;
+  color: var(--vscode-editor-foreground);
+  line-height: 1.25 !important;
+  padding: 0 !important;
+}
+
+.milkdown .ProseMirror h1 {
+  font-size: 2em !important;
+  margin-top: 24px !important;
+  margin-bottom: 16px !important;
+  padding-bottom: 0.3em !important;
+  border-bottom: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.2));
+}
+
+.milkdown .ProseMirror h2 {
+  font-size: 1.5em !important;
+  margin-top: 24px !important;
+  margin-bottom: 16px !important;
+  padding-bottom: 0.3em !important;
+  border-bottom: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.2));
+}
+
+.milkdown .ProseMirror h3 {
+  font-size: 1.25em !important;
+  margin-top: 24px !important;
+  margin-bottom: 16px !important;
+}
+
+.milkdown .ProseMirror h4 {
+  font-size: 1em !important;
+  margin-top: 24px !important;
+  margin-bottom: 16px !important;
+}
+
+.milkdown .ProseMirror h5 {
+  font-size: 0.875em !important;
+  margin-top: 24px !important;
+  margin-bottom: 16px !important;
+}
+
+.milkdown .ProseMirror h6 {
+  font-size: 0.85em !important;
+  margin-top: 24px !important;
+  margin-bottom: 16px !important;
+  color: var(--vscode-descriptionForeground, var(--vscode-editor-foreground));
+}
+
+/* ---------------------------------------------------------
+   8. Paragraphs
+   --------------------------------------------------------- */
+
+.milkdown .ProseMirror p {
+  font-size: inherit !important;
+  line-height: 1.6 !important;
+  padding: 0 !important;
+  margin: 0 0 16px 0 !important;
+}
+
+/* ---------------------------------------------------------
+   9. Links
+   --------------------------------------------------------- */
+
+.milkdown .ProseMirror a {
+  color: var(--vscode-textLink-foreground) !important;
+  text-decoration: none !important;
+}
+
+.milkdown .ProseMirror a:hover {
+  color: var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground)) !important;
+  text-decoration: underline !important;
+}
+
+/* ---------------------------------------------------------
+   10. Inline code
+   --------------------------------------------------------- */
+
+.milkdown .ProseMirror code {
+  color: var(--vscode-editor-foreground) !important;
+  background: var(--vscode-textCodeBlock-background) !important;
+  font-family: var(--vscode-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", monospace) !important;
+  font-size: 85% !important;
+  padding: 0.2em 0.4em !important;
+  border-radius: 3px !important;
+  display: inline !important;
+  line-height: inherit !important;
+}
+
+/* ---------------------------------------------------------
+   11. Code blocks (fenced code via CodeMirror)
+   --------------------------------------------------------- */
+
+.milkdown .milkdown-code-block {
+  background: var(--vscode-textCodeBlock-background) !important;
+  border-radius: 4px !important;
+  padding: 8px 16px 16px !important;
+  margin: 0 0 16px 0 !important;
+}
+
+.milkdown .milkdown-code-block .cm-editor {
+  background: transparent !important;
+  font-family: var(--vscode-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", monospace) !important;
+  font-size: var(--vscode-editor-font-size, 14px) !important;
+}
+
+.milkdown .milkdown-code-block .cm-editor .cm-content {
+  font-family: var(--vscode-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", monospace) !important;
+}
+
+.milkdown .milkdown-code-block .cm-gutters {
+  background: transparent !important;
+  border-right: none !important;
+  color: var(--vscode-editorLineNumber-foreground, rgba(128,128,128,.5)) !important;
+}
+
+.milkdown .milkdown-code-block .cm-activeLineGutter,
+.milkdown .milkdown-code-block .cm-activeLine {
+  background: transparent !important;
+}
+
+/* Pre blocks (fallback / non-CodeMirror code) */
+
+.milkdown .ProseMirror pre {
+  background: var(--vscode-textCodeBlock-background) !important;
+  padding: 16px !important;
+  border-radius: 4px !important;
+  overflow-x: auto;
+  margin: 0 0 16px 0 !important;
+}
+
+.milkdown .ProseMirror pre code {
+  background: transparent !important;
+  padding: 0 !important;
+  font-size: var(--vscode-editor-font-size, 14px) !important;
+  color: var(--vscode-editor-foreground) !important;
+}
+
+/* ---------------------------------------------------------
+   12. Blockquotes
+   --------------------------------------------------------- */
+
+.milkdown .ProseMirror blockquote {
+  background: var(--vscode-textBlockQuote-background) !important;
+  padding: 0 16px !important;
+  padding-left: 16px !important;
+  margin: 0 0 16px 0 !important;
+}
+
+.milkdown .ProseMirror blockquote::before {
+  background: var(--vscode-textBlockQuote-border, rgba(128,128,128,.5)) !important;
+  width: 3px !important;
+  border-radius: 0 !important;
+}
+
+/* ---------------------------------------------------------
+   13. Tables
+   --------------------------------------------------------- */
+
+.milkdown table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0 0 16px 0;
+}
+
+.milkdown th,
+.milkdown td {
+  border: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.3));
+  padding: 6px 12px;
+  text-align: left;
+}
+
+.milkdown th {
+  background: var(--vscode-textCodeBlock-background);
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------
+   14. Lists
+   --------------------------------------------------------- */
+
+.milkdown .ProseMirror ul,
+.milkdown .ProseMirror ol {
+  padding-left: 2em !important;
+  margin: 0 0 16px 0 !important;
+}
+
+.milkdown .ProseMirror li {
+  margin: 0 !important;
+}
+
+.milkdown .ProseMirror li > p {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.milkdown .ProseMirror li > ul,
+.milkdown .ProseMirror li > ol {
+  margin: 4px 0 0 0 !important;
+}
+
+/* Crepe list-item-block wrapper overrides — eliminate extra height */
+
+.milkdown .milkdown-list-item-block {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.milkdown .milkdown-list-item-block li {
+  gap: 4px !important;
+}
+
+.milkdown .milkdown-list-item-block li .label-wrapper {
+  height: auto !important;
+  min-height: 0 !important;
+  width: 20px !important;
+  line-height: 1.6 !important;
+}
+
+.milkdown .milkdown-list-item-block li .label-wrapper .label {
+  height: auto !important;
+  padding: 0 !important;
+  line-height: 1.6 !important;
+}
+
+.milkdown .milkdown-list-item-block > .list-item > .children p {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* ---------------------------------------------------------
+   15. Horizontal rules
+   --------------------------------------------------------- */
+
+.milkdown .ProseMirror hr {
+  border: none !important;
+  background: none !important;
+  background-color: transparent !important;
+  height: auto !important;
+  padding: 0 !important;
+  border-top: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.3)) !important;
+  margin: 24px 0 !important;
+}
+
+/* ---------------------------------------------------------
+   16. Images
+   --------------------------------------------------------- */
+
+.milkdown img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------------------------------------------------------
+   17. Task / checkbox lists
+   --------------------------------------------------------- */
+
+.milkdown input[type="checkbox"] {
+  accent-color: var(--vscode-focusBorder);
+  margin-right: 0.4em;
+}
+
+/* ---------------------------------------------------------
+   18. Crepe UI components (language picker, toolbar, etc.)
+       Override surfaces to match VS Code chrome
+   --------------------------------------------------------- */
+
+.milkdown .milkdown-code-block .list-wrapper {
+  background: var(--vscode-dropdown-background, var(--vscode-editor-background)) !important;
+  border: 1px solid var(--vscode-dropdown-border, var(--vscode-editorWidget-border)) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2) !important;
+}
+
+.milkdown .milkdown-code-block .language-list-item:hover,
+.milkdown .milkdown-code-block .language-list-item:focus-visible {
+  background: var(--vscode-list-hoverBackground) !important;
+}
+
+.milkdown .milkdown-code-block .search-box {
+  outline-color: var(--vscode-focusBorder) !important;
+}
+
+.milkdown .milkdown-code-block .search-box input {
+  color: var(--vscode-input-foreground, var(--vscode-editor-foreground)) !important;
+}
