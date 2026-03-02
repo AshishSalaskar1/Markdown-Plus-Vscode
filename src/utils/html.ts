@@ -36,7 +36,7 @@ export function getWebviewHtml(
   ${baseTag}
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource} https: data:; script-src 'nonce-${nonce}'; style-src ${cspSource} 'unsafe-inline'; font-src ${cspSource};">
   <link href="${styleUri}" rel="stylesheet" />
-  <title>Markdown Plus</title>
+  <title>Markdown Pro</title>
 </head>
 <body>
   <div id="toolbar"></div>

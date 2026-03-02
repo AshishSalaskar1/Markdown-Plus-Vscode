@@ -1,5 +1,5 @@
 /**
- * Markdown Plus — Webview entry point
+ * Markdown Pro — Webview entry point
  *
  * Initialises Milkdown Crepe and wires up the bidirectional
  * message bridge between the WYSIWYG editor and the extension host.
@@ -48,11 +48,11 @@ function applyTheme(themeId: string): void {
 
 /**
  * Apply a custom font size by setting a CSS custom property on the body.
- * The editor.css stylesheet reads `--mdplus-font-size` to size all content.
+ * The editor.css stylesheet reads `--mdpro-font-size` to size all content.
  */
 function applyFontSize(fontSize: number): void {
   document.documentElement.style.setProperty(
-    "--mdplus-font-size",
+    "--mdpro-font-size",
     `${fontSize}px`,
   );
 }

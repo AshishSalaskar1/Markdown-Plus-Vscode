@@ -25,7 +25,7 @@ export const THEMES: readonly ThemeDefinition[] = [
 /** Read the persisted theme from configuration. */
 export function getActiveTheme(): string {
   return vscode.workspace
-    .getConfiguration('markdownPlus')
+    .getConfiguration('markdownPro')
     .get<string>('theme', 'vscode');
 }
 
@@ -34,7 +34,7 @@ interface ThemeQuickPickItem extends vscode.QuickPickItem {
 }
 
 /**
- * Register the `markdownPlus.changeTheme` command.
+ * Register the `markdownPro.changeTheme` command.
  *
  * Opens a QuickPick that previews themes live as the user navigates
  * with arrow keys, persists on Enter, and reverts on Escape — mirroring
@@ -45,7 +45,7 @@ export function registerThemeCommand(
   getActiveWebviews: () => vscode.WebviewPanel[],
 ): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('markdownPlus.changeTheme', () => {
+    vscode.commands.registerCommand('markdownPro.changeTheme', () => {
       const originalTheme = getActiveTheme();
 
       const items: ThemeQuickPickItem[] = THEMES.map((t) => ({
@@ -87,7 +87,7 @@ export function registerThemeCommand(
         const selected = quickPick.selectedItems[0];
         if (selected) {
           vscode.workspace
-            .getConfiguration('markdownPlus')
+            .getConfiguration('markdownPro')
             .update('theme', selected.themeId, vscode.ConfigurationTarget.Global);
         }
         quickPick.hide();

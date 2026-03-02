@@ -1,5 +1,5 @@
 /* ============================================================
-   Markdown Plus — VS Code Markdown-Preview-style theme
+   Markdown Pro — VS Code Markdown-Preview-style theme
    All colors derived from VS Code CSS variables so the editor
    automatically matches light, dark, and high-contrast themes.
    ============================================================ */
@@ -56,7 +56,7 @@ body {
   background: var(--vscode-editor-background);
   color: var(--vscode-editor-foreground);
   font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif);
-  font-size: var(--mdplus-font-size, 16px);
+  font-size: var(--mdpro-font-size, 16px);
   line-height: 1.6;
 }
 

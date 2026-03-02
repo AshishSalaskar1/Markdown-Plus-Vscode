@@ -1,9 +1,9 @@
 {
-  "name": "markdown-plus",
-  "displayName": "Markdown Plus",
+  "name": "markdown-pro",
+  "displayName": "Markdown Pro",
   "description": "WYSIWYG markdown editor for VS Code",
-  "version": "0.1.0",
-  "publisher": "markdown-plus",
+  "version": "0.2.0",
+  "publisher": "ashishsalaskar",
   "icon": "Markdown_Plus_Logo_v2.png",
   "license": "MIT",
   "keywords": [
@@ -40,8 +40,8 @@
   "contributes": {
     "customEditors": [
       {
-        "viewType": "markdownPlus.editor",
-        "displayName": "Markdown Plus",
+        "viewType": "markdownPro.editor",
+        "displayName": "Markdown Pro",
         "selector": [
           {
             "filenamePattern": "*.md"
@@ -53,63 +53,84 @@
         "priority": "option"
       }
     ],
+    "keybindings": [
+      {
+        "command": "markdownPro.openEditor",
+        "key": "ctrl+shift+m",
+        "mac": "cmd+shift+m",
+        "when": "resourceLangId == markdown"
+      }
+    ],
     "commands": [
       {
-        "command": "markdownPlus.openEditor",
-        "title": "Open with Markdown Plus"
+        "command": "markdownPro.openEditor",
+        "title": "Open Editor",
+        "category": "Markdown Pro",
+        "icon": "$(book)"
       },
       {
-        "command": "markdownPlus.changeTheme",
-        "title": "Markdown Plus: Change Theme"
+        "command": "markdownPro.changeTheme",
+        "title": "Change Theme",
+        "category": "Markdown Pro"
       },
       {
-        "command": "markdownPlus.increaseFontSize",
-        "title": "Markdown Plus: Increase Font Size"
+        "command": "markdownPro.increaseFontSize",
+        "title": "Increase Font Size",
+        "category": "Markdown Pro"
       },
       {
-        "command": "markdownPlus.decreaseFontSize",
-        "title": "Markdown Plus: Decrease Font Size"
+        "command": "markdownPro.decreaseFontSize",
+        "title": "Decrease Font Size",
+        "category": "Markdown Pro"
       },
       {
-        "command": "markdownPlus.resetFontSize",
-        "title": "Markdown Plus: Reset Font Size"
+        "command": "markdownPro.resetFontSize",
+        "title": "Reset Font Size",
+        "category": "Markdown Pro"
       }
     ],
     "menus": {
       "explorer/context": [
         {
-          "command": "markdownPlus.openEditor",
+          "command": "markdownPro.openEditor",
           "when": "resourceLangId == markdown"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "markdownPro.openEditor",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
         }
       ],
       "editor/title/context": [
         {
-          "command": "markdownPlus.openEditor",
+          "command": "markdownPro.openEditor",
           "when": "resourceLangId == markdown"
         }
       ],
       "commandPalette": [
         {
-          "command": "markdownPlus.openEditor"
+          "command": "markdownPro.openEditor"
         },
         {
-          "command": "markdownPlus.changeTheme"
+          "command": "markdownPro.changeTheme"
         },
         {
-          "command": "markdownPlus.increaseFontSize"
+          "command": "markdownPro.increaseFontSize"
         },
         {
-          "command": "markdownPlus.decreaseFontSize"
+          "command": "markdownPro.decreaseFontSize"
         },
         {
-          "command": "markdownPlus.resetFontSize"
+          "command": "markdownPro.resetFontSize"
         }
       ]
     },
     "configuration": {
-      "title": "Markdown Plus",
+      "title": "Markdown Pro",
       "properties": {
-        "markdownPlus.theme": {
+        "markdownPro.theme": {
           "type": "string",
           "default": "vscode",
           "enum": [
@@ -138,14 +159,14 @@
             "Gruvbox Light",
             "Gruvbox Dark"
           ],
-          "markdownDescription": "Color theme for the Markdown Plus WYSIWYG editor. Select `VS Code` to inherit your current editor theme, or choose a standalone theme."
+          "markdownDescription": "Color theme for the Markdown Pro WYSIWYG editor. Select `VS Code` to inherit your current editor theme, or choose a standalone theme."
         },
-        "markdownPlus.fontSize": {
+        "markdownPro.fontSize": {
           "type": "number",
           "default": 16,
           "minimum": 8,
           "maximum": 40,
-          "markdownDescription": "Font size (in pixels) for the Markdown Plus editor. Use the commands `Markdown Plus: Increase Font Size` / `Decrease Font Size` for quick adjustments."
+          "markdownDescription": "Font size (in pixels) for the Markdown Pro editor. Use the commands `Markdown Pro: Increase Font Size` / `Decrease Font Size` for quick adjustments."
         }
       }
     }

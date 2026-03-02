@@ -5,7 +5,7 @@ import { broadcastTheme, getActiveTheme } from './themes';
 /** Read the persisted font size from configuration. */
 export function getActiveFontSize(): number {
   return vscode.workspace
-    .getConfiguration('markdownPlus')
+    .getConfiguration('markdownPro')
     .get<number>('fontSize', 16);
 }
 
@@ -20,7 +20,7 @@ export function broadcastFontSize(
 }
 
 /**
- * CustomTextEditorProvider that drives the Markdown Plus WYSIWYG editor.
+ * CustomTextEditorProvider that drives the Markdown Pro WYSIWYG editor.
  *
  * Bidirectional sync between the VS Code TextDocument and the webview uses
  * a triple-guard strategy to prevent infinite edit loops:
@@ -32,8 +32,8 @@ export function broadcastFontSize(
  *   3. `currentVersion` — monotonically increasing version so stale
  *      webview messages are discarded on both sides.
  */
-export class MarkdownPlusEditorProvider implements vscode.CustomTextEditorProvider {
-  public static readonly viewType = 'markdownPlus.editor';
+export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvider {
+  public static readonly viewType = 'markdownPro.editor';
 
   /** All currently open webview panels, used for theme broadcasting. */
   private readonly activePanels = new Set<vscode.WebviewPanel>();
@@ -44,24 +44,24 @@ export class MarkdownPlusEditorProvider implements vscode.CustomTextEditorProvid
    */
   public static register(context: vscode.ExtensionContext): {
     disposable: vscode.Disposable;
-    provider: MarkdownPlusEditorProvider;
+    provider: MarkdownProEditorProvider;
   } {
-    const provider = new MarkdownPlusEditorProvider(context);
+    const provider = new MarkdownProEditorProvider(context);
 
     // Broadcast theme and font-size changes from settings to all open panels
     context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration((e) => {
-        if (e.affectsConfiguration('markdownPlus.theme')) {
+        if (e.affectsConfiguration('markdownPro.theme')) {
           broadcastTheme([...provider.activePanels], getActiveTheme());
         }
-        if (e.affectsConfiguration('markdownPlus.fontSize')) {
+        if (e.affectsConfiguration('markdownPro.fontSize')) {
           broadcastFontSize([...provider.activePanels], getActiveFontSize());
         }
       }),
     );
 
     const disposable = vscode.window.registerCustomEditorProvider(
-      MarkdownPlusEditorProvider.viewType,
+      MarkdownProEditorProvider.viewType,
       provider,
       { webviewOptions: { retainContextWhenHidden: true } },
     );
@@ -109,7 +109,7 @@ export class MarkdownPlusEditorProvider implements vscode.CustomTextEditorProvid
     // Step 5.2: Warn (dev console) if the file is very large.
     if (document.lineCount > 5000) {
       console.warn(
-        `Markdown Plus: "${document.fileName}" has ${document.lineCount} lines — performance may be affected.`,
+        `Markdown Pro: "${document.fileName}" has ${document.lineCount} lines — performance may be affected.`,
       );
     }
 

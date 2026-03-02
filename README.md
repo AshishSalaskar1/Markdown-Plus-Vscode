@@ -1,4 +1,4 @@
-# Markdown Plus
+# Markdown Pro
 
 ![1.00](Markdown_Plus_Logo_v2.png)
 
@@ -30,26 +30,26 @@ A WYSIWYG markdown editor for Visual Studio Code. Edit markdown files in a live,
 
 Use any of these methods to open a markdown file in the WYSIWYG editor:
 
-* **Explorer context menu** — right-click any `.md` file in the sidebar and select **Open with Markdown Plus**.
+* **Explorer context menu** — right-click any `.md` file in the sidebar and select **Open with Markdown Pro**.
 
-* **Editor title menu** — right-click the editor tab and select **Open with Markdown Plus**.
+* **Editor title menu** — right-click the editor tab and select **Open with Markdown Pro**.
 
-* **Command Palette** — press `Ctrl+Shift+P` (`Cmd+Shift+P` on macOS) and run **Open with Markdown Plus**.
+* **Command Palette** — press `Ctrl+Shift+P` (`Cmd+Shift+P` on macOS) and run **Open with Markdown Pro**.
 
 ### Setting as the Default Editor
 
 1. Open any `.md` file.
 2. Click the editor selector in the top-right corner (or run **View: Reopen Editor With...** from the Command Palette).
-3. Select **Markdown Plus** from the list.
-4. Optionally, click **Configure default editor for '\*.md'** and choose **Markdown Plus** to always open markdown files with it.
+3. Select **Markdown Pro** from the list.
+4. Optionally, click **Configure default editor for '\*.md'** and choose **Markdown Pro** to always open markdown files with it.
 
 ## Changing Themes
 
 1. Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`).
-2. Run **Markdown Plus: Change Theme**.
+2. Run **Markdown Pro: Change Theme**.
 3. Use the arrow keys to live-preview each theme, then press Enter to apply.
 
-You can also set the theme in VS Code Settings under `markdownPlus.theme`.
+You can also set the theme in VS Code Settings under `markdownPro.theme`.
 
 ### Available Themes
 
@@ -69,7 +69,7 @@ You can also set the theme in VS Code Settings under `markdownPlus.theme`.
 
 ## Supported Markdown Elements
 
-Markdown Plus renders all standard Markdown and GitHub Flavored Markdown (GFM) elements in the WYSIWYG editor. Type the syntax below and it renders instantly.
+Markdown Pro renders all standard Markdown and GitHub Flavored Markdown (GFM) elements in the WYSIWYG editor. Type the syntax below and it renders instantly.
 
 ### Text Formatting
 
@@ -180,13 +180,13 @@ Type `/` at the beginning of a new line to open the slash-command menu, which pr
 
 Adjust the editor font size with these commands (available in the Command Palette):
 
-| Command                               | Description              |
-| ------------------------------------- | ------------------------ |
-| **Markdown Plus: Increase Font Size** | Increase by 1 px         |
-| **Markdown Plus: Decrease Font Size** | Decrease by 1 px         |
-| **Markdown Plus: Reset Font Size**    | Reset to default (16 px) |
+| Command                              | Description              |
+| ------------------------------------ | ------------------------ |
+| **Markdown Pro: Increase Font Size** | Increase by 1 px         |
+| **Markdown Pro: Decrease Font Size** | Decrease by 1 px         |
+| **Markdown Pro: Reset Font Size**    | Reset to default (16 px) |
 
-You can also set the size directly in VS Code Settings under `markdownPlus.fontSize` (range: 8–40 px).
+You can also set the size directly in VS Code Settings under `markdownPro.fontSize` (range: 8–40 px).
 
 ## Requirements
 

@@ -1,6 +1,6 @@
 ***
 
-title: Markdown Plus
+title: Markdown Pro
 description: A WYSIWYG markdown editor extension for VS Code
 ms.date: 2026-03-02
 ms.topic: overview
@@ -16,7 +16,7 @@ keywords:
 
 ***
 
-# Markdown Plus
+# Markdown Pro
 
 A WYSIWYG markdown editor extension for Visual Studio Code. Edit markdown files in a live, rich-text view where formatting renders instantly as you type, and every change syncs back to the underlying file in real time.
 
@@ -30,9 +30,9 @@ A WYSIWYG markdown editor extension for Visual Studio Code. Edit markdown files 
 
 * Dual-timer debounce (50 ms idle, 150 ms typing) keeps the UI responsive during rapid edits.
 
-* Right-click any markdown file in the Explorer or editor title bar and select "Open with Markdown Plus".
+* Right-click any markdown file in the Explorer or editor title bar and select "Open with Markdown Pro".
 
-* Open from the Command Palette with the `Open with Markdown Plus` command.
+* Open from the Command Palette with the `Open with Markdown Pro` command.
 
 * Relative image paths resolve correctly inside the editor (e.g., `![](./img.png)<!-- -->`).
 
@@ -42,9 +42,9 @@ A WYSIWYG markdown editor extension for Visual Studio Code. Edit markdown files 
 
 * **11 built-in editor themes** including GitHub Light/Dark, Dracula, Nord, One Dark, Tokyo Night, Solarized, and Gruvbox.
 
-* **Live theme preview** — open `Markdown Plus: Change Theme` from the Command Palette and preview themes with arrow keys before committing.
+* **Live theme preview** — open `Markdown Pro: Change Theme` from the Command Palette and preview themes with arrow keys before committing.
 
-* Theme selection also available in VS Code Settings under `markdownPlus.theme`.
+* Theme selection also available in VS Code Settings under `markdownPro.theme`.
 
 ## Prerequisites
 
@@ -83,7 +83,7 @@ npm run watch
 | Path                          | Purpose                                         |
 | ----------------------------- | ----------------------------------------------- |
 | `src/extension.ts`            | Extension entry point, command registration     |
-| `src/MarkdownPlusProvider.ts` | Custom editor provider with bidirectional sync  |
+| `src/MarkdownProProvider.ts` | Custom editor provider with bidirectional sync  |
 | `src/themes.ts`               | Theme definitions and QuickPick command         |
 | `src/utils/html.ts`           | Generates the webview HTML shell                |
 | `src/utils/nonce.ts`          | CSP nonce helper                                |
@@ -105,11 +105,11 @@ npm run watch
 4. In the Extension Development Host window, open any `.md` file.
 5. Use one of these methods to activate the WYSIWYG editor:
 
-   * Right-click the file in the Explorer sidebar and select **Open with Markdown Plus**.
+   * Right-click the file in the Explorer sidebar and select **Open with Markdown Pro**.
 
-   * Right-click the editor tab title and select **Open with Markdown Plus**.
+   * Right-click the editor tab title and select **Open with Markdown Pro**.
 
-   * Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run **Open with Markdown Plus**.
+   * Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run **Open with Markdown Pro**.
 
 > \[!TIP]
 > If you have `npm run watch` running, any code changes rebuild automatically. Reload the Extension Development Host window (`Ctrl+Shift+P` > **Developer: Reload Window**) to pick up changes.
@@ -124,24 +124,24 @@ To test the packaged extension outside the development host:
    npm run package
    ```
 
-   This produces a `markdown-plus-0.1.0.vsix` file in the project root.
+   This produces a `markdown-pro-0.1.0.vsix` file in the project root.
 
 2. Install the VSIX in VS Code:
 
    ```bash
-   code --install-extension markdown-plus-0.1.0.vsix
+   code --install-extension markdown-pro-0.1.0.vsix
    ```
 
-3. Reload VS Code, then open any markdown file and use the **Open with Markdown Plus** command.
+3. Reload VS Code, then open any markdown file and use the **Open with Markdown Pro** command.
 
-### Setting Markdown Plus as the default editor
+### Setting Markdown Pro as the default editor
 
 After installing the extension, you can make it the default editor for markdown files:
 
 1. Open any `.md` file.
 2. Click the editor selector in the top-right corner of the editor (or run `View: Reopen Editor With...` from the Command Palette).
-3. Select **Markdown Plus** from the list.
-4. Optionally, click **Configure default editor for '\*.md'** and choose **Markdown Plus** to open all markdown files with it by default.
+3. Select **Markdown Pro** from the list.
+4. Optionally, click **Configure default editor for '\*.md'** and choose **Markdown Pro** to open all markdown files with it by default.
 
 ## Scripts Reference
 
