@@ -1,8 +1,8 @@
 # Markdown Pro
 
-![1.00](Markdown_Plus_Logo_v2.png)
-
 A WYSIWYG markdown editor for Visual Studio Code. Edit markdown files in a live, rich-text view where formatting renders instantly as you type, and every change syncs back to the underlying file in real time.
+
+[Vscode Extension Link](https://marketplace.visualstudio.com/items?itemName=AshishSalaskar.markdown-pro)
 
 ## Features
 
