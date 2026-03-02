@@ -19,8 +19,12 @@ export const THEMES: readonly ThemeDefinition[] = [
   { id: 'one-dark',         label: '$(symbol-color) One Dark',        description: "Atom's iconic dark theme" },
   { id: 'tokyo-night',      label: '$(symbol-color) Tokyo Night',     description: 'Inspired by Tokyo city lights' },
   { id: 'gruvbox-light',    label: '$(symbol-color) Gruvbox Light',   description: 'Retro groove light palette' },
-  { id: 'gruvbox-dark',     label: '$(symbol-color) Gruvbox Dark',    description: 'Retro groove dark palette' },
-] as const;
+  { id: 'gruvbox-dark',     label: '$(symbol-color) Gruvbox Dark',    description: 'Retro groove dark palette' },  { id: 'catppuccin-mocha', label: '$(symbol-color) Catppuccin Mocha', description: 'Soothing pastel dark theme' },
+  { id: 'catppuccin-latte', label: '$(symbol-color) Catppuccin Latte', description: 'Soothing pastel light theme' },
+  { id: 'rose-pine',        label: '$(symbol-color) Rosé Pine',        description: 'Soho vibes for dark coding' },
+  { id: 'rose-pine-dawn',   label: '$(symbol-color) Rosé Pine Dawn',   description: 'Rosé Pine for light backgrounds' },
+  { id: 'monokai-pro',      label: '$(symbol-color) Monokai Pro',      description: 'Classic iconic dark theme' },
+  { id: 'everforest-dark',  label: '$(symbol-color) Everforest Dark',  description: 'Warm green nature-inspired palette' },] as const;
 
 /** Read the persisted theme from configuration. */
 export function getActiveTheme(): string {

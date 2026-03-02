@@ -19,6 +19,83 @@ export function broadcastFontSize(
   }
 }
 
+/** Read the persisted line height from configuration. */
+export function getActiveLineHeight(): number {
+  return vscode.workspace
+    .getConfiguration('markdownPro')
+    .get<number>('lineHeight', 1.6);
+}
+
+/** Send a line-height change message to all open webview panels. */
+export function broadcastLineHeight(
+  panels: vscode.WebviewPanel[],
+  lineHeight: number,
+): void {
+  for (const panel of panels) {
+    panel.webview.postMessage({ type: 'lineHeightChange', lineHeight });
+  }
+}
+
+/** Font family presets mapped to CSS font stacks. */
+const FONT_FAMILY_MAP: Record<string, string> = {
+  default: '',
+  serif: 'Georgia, "Times New Roman", Times, "Noto Serif", serif',
+  'sans-serif': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  monospace: 'var(--vscode-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", monospace)',
+};
+
+/** Read the persisted font family from configuration. */
+export function getActiveFontFamily(): string {
+  const raw = vscode.workspace
+    .getConfiguration('markdownPro')
+    .get<string>('fontFamily', 'default');
+  return FONT_FAMILY_MAP[raw] ?? raw;
+}
+
+/** Send a font-family change message to all open webview panels. */
+export function broadcastFontFamily(
+  panels: vscode.WebviewPanel[],
+  fontFamily: string,
+): void {
+  for (const panel of panels) {
+    panel.webview.postMessage({ type: 'fontFamilyChange', fontFamily });
+  }
+}
+
+/** Read the persisted content width from configuration. */
+export function getActiveContentWidth(): number {
+  return vscode.workspace
+    .getConfiguration('markdownPro')
+    .get<number>('contentWidth', 900);
+}
+
+/** Send a content-width change message to all open webview panels. */
+export function broadcastContentWidth(
+  panels: vscode.WebviewPanel[],
+  contentWidth: number,
+): void {
+  for (const panel of panels) {
+    panel.webview.postMessage({ type: 'contentWidthChange', contentWidth });
+  }
+}
+
+/** Read the persisted toolbar visibility from configuration. */
+export function getActiveShowToolbar(): boolean {
+  return vscode.workspace
+    .getConfiguration('markdownPro')
+    .get<boolean>('showToolbar', true);
+}
+
+/** Send a toolbar visibility change message to all open webview panels. */
+export function broadcastShowToolbar(
+  panels: vscode.WebviewPanel[],
+  showToolbar: boolean,
+): void {
+  for (const panel of panels) {
+    panel.webview.postMessage({ type: 'showToolbarChange', showToolbar });
+  }
+}
+
 /**
  * CustomTextEditorProvider that drives the Markdown Pro WYSIWYG editor.
  *
@@ -56,6 +133,18 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
         }
         if (e.affectsConfiguration('markdownPro.fontSize')) {
           broadcastFontSize([...provider.activePanels], getActiveFontSize());
+        }
+        if (e.affectsConfiguration('markdownPro.lineHeight')) {
+          broadcastLineHeight([...provider.activePanels], getActiveLineHeight());
+        }
+        if (e.affectsConfiguration('markdownPro.fontFamily')) {
+          broadcastFontFamily([...provider.activePanels], getActiveFontFamily());
+        }
+        if (e.affectsConfiguration('markdownPro.contentWidth')) {
+          broadcastContentWidth([...provider.activePanels], getActiveContentWidth());
+        }
+        if (e.affectsConfiguration('markdownPro.showToolbar')) {
+          broadcastShowToolbar([...provider.activePanels], getActiveShowToolbar());
         }
       }),
     );
@@ -172,6 +261,22 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
             webviewPanel.webview.postMessage({
               type: 'fontSizeChange',
               fontSize: getActiveFontSize(),
+            });
+            webviewPanel.webview.postMessage({
+              type: 'lineHeightChange',
+              lineHeight: getActiveLineHeight(),
+            });
+            webviewPanel.webview.postMessage({
+              type: 'fontFamilyChange',
+              fontFamily: getActiveFontFamily(),
+            });
+            webviewPanel.webview.postMessage({
+              type: 'contentWidthChange',
+              contentWidth: getActiveContentWidth(),
+            });
+            webviewPanel.webview.postMessage({
+              type: 'showToolbarChange',
+              showToolbar: getActiveShowToolbar(),
             });
             break;
 

@@ -2,7 +2,7 @@
   "name": "markdown-pro",
   "displayName": "Markdown Pro",
   "description": "WYSIWYG markdown editor for VS Code",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "ashishsalaskar",
   "icon": "Markdown_Plus_Logo_v2.png",
   "license": "MIT",
@@ -93,7 +93,8 @@
       "explorer/context": [
         {
           "command": "markdownPro.openEditor",
-          "when": "resourceLangId == markdown"
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
         }
       ],
       "editor/title": [
@@ -107,6 +108,13 @@
         {
           "command": "markdownPro.openEditor",
           "when": "resourceLangId == markdown"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "markdownPro.openEditor",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
         }
       ],
       "commandPalette": [
@@ -144,7 +152,13 @@
             "one-dark",
             "tokyo-night",
             "gruvbox-light",
-            "gruvbox-dark"
+            "gruvbox-dark",
+            "catppuccin-mocha",
+            "catppuccin-latte",
+            "rose-pine",
+            "rose-pine-dawn",
+            "monokai-pro",
+            "everforest-dark"
           ],
           "enumItemLabels": [
             "VS Code (match editor theme)",
@@ -157,7 +171,13 @@
             "One Dark",
             "Tokyo Night",
             "Gruvbox Light",
-            "Gruvbox Dark"
+            "Gruvbox Dark",
+            "Catppuccin Mocha",
+            "Catppuccin Latte",
+            "Rosé Pine",
+            "Rosé Pine Dawn",
+            "Monokai Pro",
+            "Everforest Dark"
           ],
           "markdownDescription": "Color theme for the Markdown Pro WYSIWYG editor. Select `VS Code` to inherit your current editor theme, or choose a standalone theme."
         },
@@ -167,6 +187,42 @@
           "minimum": 8,
           "maximum": 40,
           "markdownDescription": "Font size (in pixels) for the Markdown Pro editor. Use the commands `Markdown Pro: Increase Font Size` / `Decrease Font Size` for quick adjustments."
+        },
+        "markdownPro.lineHeight": {
+          "type": "number",
+          "default": 1.6,
+          "minimum": 1.0,
+          "maximum": 3.0,
+          "markdownDescription": "Line height (line spacing) for the Markdown Pro editor. Values like `1.4` for compact, `1.6` for normal, or `2.0` for relaxed spacing."
+        },
+        "markdownPro.fontFamily": {
+          "type": "string",
+          "default": "default",
+          "enum": [
+            "default",
+            "serif",
+            "sans-serif",
+            "monospace"
+          ],
+          "enumItemLabels": [
+            "Default (VS Code font)",
+            "Serif (Georgia, Times)",
+            "Sans-Serif (system UI)",
+            "Monospace (editor font)"
+          ],
+          "markdownDescription": "Font family for the Markdown Pro editor content. Choose a preset or edit `settings.json` directly to use any CSS font-family value."
+        },
+        "markdownPro.contentWidth": {
+          "type": "number",
+          "default": 900,
+          "minimum": 400,
+          "maximum": 1600,
+          "markdownDescription": "Maximum content width (in pixels) for the Markdown Pro editor. Use `900` for comfortable reading or `1200`+ for wide screens."
+        },
+        "markdownPro.showToolbar": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show or hide the formatting toolbar at the top of the Markdown Pro editor."
         }
       }
     }

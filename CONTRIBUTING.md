@@ -80,18 +80,18 @@ npm run watch
 
 ### 3. Project structure
 
-| Path                          | Purpose                                         |
-| ----------------------------- | ----------------------------------------------- |
-| `src/extension.ts`            | Extension entry point, command registration     |
+| Path                         | Purpose                                         |
+| ---------------------------- | ----------------------------------------------- |
+| `src/extension.ts`           | Extension entry point, command registration     |
 | `src/MarkdownProProvider.ts` | Custom editor provider with bidirectional sync  |
-| `src/themes.ts`               | Theme definitions and QuickPick command         |
-| `src/utils/html.ts`           | Generates the webview HTML shell                |
-| `src/utils/nonce.ts`          | CSP nonce helper                                |
-| `webview/main.ts`             | Webview entry point, Milkdown Crepe setup       |
-| `webview/styles/editor.css`   | Base editor styles (VS Code variable mappings)  |
-| `webview/styles/themes.css`   | Theme definitions (10 custom themes)            |
-| `esbuild.config.mjs`          | Build configuration for extension and webview   |
-| `dist/`                       | Compiled output (extension.js, webview\.js/css) |
+| `src/themes.ts`              | Theme definitions and QuickPick command         |
+| `src/utils/html.ts`          | Generates the webview HTML shell                |
+| `src/utils/nonce.ts`         | CSP nonce helper                                |
+| `webview/main.ts`            | Webview entry point, Milkdown Crepe setup       |
+| `webview/styles/editor.css`  | Base editor styles (VS Code variable mappings)  |
+| `webview/styles/themes.css`  | Theme definitions (10 custom themes)            |
+| `esbuild.config.mjs`         | Build configuration for extension and webview   |
+| `dist/`                      | Compiled output (extension.js, webview\.js/css) |
 
 ## Running the Extension Locally
 

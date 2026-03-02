@@ -57,6 +57,52 @@ function applyFontSize(fontSize: number): void {
   );
 }
 
+/**
+ * Apply a custom line height by setting a CSS custom property.
+ * Used for line spacing throughout the editor content.
+ */
+function applyLineHeight(lineHeight: number): void {
+  document.documentElement.style.setProperty(
+    "--mdpro-line-height",
+    `${lineHeight}`,
+  );
+}
+
+/**
+ * Apply a custom font family. An empty string resets to the default
+ * (inherited from VS Code theme variables in editor.css).
+ */
+function applyFontFamily(fontFamily: string): void {
+  if (fontFamily) {
+    document.documentElement.style.setProperty(
+      "--mdpro-font-family",
+      fontFamily,
+    );
+  } else {
+    document.documentElement.style.removeProperty("--mdpro-font-family");
+  }
+}
+
+/**
+ * Apply a custom content width (max-width) for the editor and toolbar.
+ */
+function applyContentWidth(contentWidth: number): void {
+  document.documentElement.style.setProperty(
+    "--mdpro-content-width",
+    `${contentWidth}px`,
+  );
+}
+
+/**
+ * Show or hide the formatting toolbar.
+ */
+function applyShowToolbar(show: boolean): void {
+  const toolbar = document.getElementById("toolbar");
+  if (toolbar) {
+    toolbar.style.display = show ? "" : "none";
+  }
+}
+
 // -------------------------------------------------------------------
 // Toolbar builder — creates a modern editing bar above the editor
 // -------------------------------------------------------------------
@@ -310,7 +356,7 @@ function buildToolbar(crepe: Crepe): void {
   // -------------------------------------------------------------------
 
   window.addEventListener("message", (event) => {
-    const { type, markdown, version, theme, fontSize } = event.data;
+    const { type, markdown, version, theme, fontSize, lineHeight, fontFamily, contentWidth, showToolbar } = event.data;
 
     if ((type === "init" || type === "update") && version > currentVersion) {
       currentVersion = version;
@@ -325,6 +371,22 @@ function buildToolbar(crepe: Crepe): void {
 
     if (type === "fontSizeChange" && typeof fontSize === "number") {
       applyFontSize(fontSize);
+    }
+
+    if (type === "lineHeightChange" && typeof lineHeight === "number") {
+      applyLineHeight(lineHeight);
+    }
+
+    if (type === "fontFamilyChange" && typeof fontFamily === "string") {
+      applyFontFamily(fontFamily);
+    }
+
+    if (type === "contentWidthChange" && typeof contentWidth === "number") {
+      applyContentWidth(contentWidth);
+    }
+
+    if (type === "showToolbarChange" && typeof showToolbar === "boolean") {
+      applyShowToolbar(showToolbar);
     }
   });
 

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { MarkdownProEditorProvider, getActiveFontSize, broadcastFontSize } from './MarkdownProProvider';
+import { MarkdownProEditorProvider, getActiveFontSize } from './MarkdownProProvider';
 import { registerThemeCommand } from './themes';
 
 export function activate(context: vscode.ExtensionContext): void {
