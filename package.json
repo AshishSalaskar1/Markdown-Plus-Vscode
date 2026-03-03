@@ -2,7 +2,7 @@
   "name": "markdown-pro",
   "displayName": "Markdown Pro",
   "description": "WYSIWYG markdown editor for VS Code",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "ashishsalaskar",
   "icon": "Markdown_Plus_Logo_v2.png",
   "license": "MIT",
@@ -57,6 +57,12 @@
           },
           {
             "filenamePattern": "*.markdown"
+          },
+          {
+            "filenamePattern": "*.instructions.md"
+          },
+          {
+            "filenamePattern": "*.copilotmd"
           }
         ],
         "priority": "option"
@@ -67,13 +73,13 @@
         "command": "markdownPro.openEditor",
         "key": "ctrl+shift+m",
         "mac": "cmd+shift+m",
-        "when": "resourceLangId =~ /^(markdown|prompt|instructions|chatagent|skill)$/ || resourceFilename =~ /\\.(md|markdown)$/"
+        "when": "resourceLangId =~ /^(markdown|prompt|instructions|chatagent|skill)$/"
       }
     ],
     "commands": [
       {
         "command": "markdownPro.openEditor",
-        "title": "Open Editor",
+        "title": "Open with Markdown Pro",
         "category": "Markdown Pro",
         "icon": "$(book)"
       },
@@ -102,27 +108,27 @@
       "explorer/context": [
         {
           "command": "markdownPro.openEditor",
-          "when": "resourceLangId =~ /^(markdown|prompt|instructions|chatagent|skill)$/ || resourceFilename =~ /\\.(md|markdown)$/",
+          "when": "resourceLangId =~ /^(markdown|prompt|instructions|chatagent|skill)$/",
           "group": "navigation"
         }
       ],
       "editor/title": [
         {
           "command": "markdownPro.openEditor",
-          "when": "resourceLangId =~ /^(markdown|prompt|instructions|chatagent|skill)$/ || resourceFilename =~ /\\.(md|markdown)$/",
+          "when": "resourceLangId =~ /^(markdown|prompt|instructions|chatagent|skill)$/",
           "group": "navigation"
         }
       ],
       "editor/title/context": [
         {
           "command": "markdownPro.openEditor",
-          "when": "resourceLangId =~ /^(markdown|prompt|instructions|chatagent|skill)$/ || resourceFilename =~ /\\.(md|markdown)$/"
+          "when": "resourceLangId =~ /^(markdown|prompt|instructions|chatagent|skill)$/"
         }
       ],
       "editor/context": [
         {
           "command": "markdownPro.openEditor",
-          "when": "resourceLangId =~ /^(markdown|prompt|instructions|chatagent|skill)$/ || resourceFilename =~ /\\.(md|markdown)$/",
+          "when": "resourceLangId =~ /^(markdown|prompt|instructions|chatagent|skill)$/",
           "group": "navigation"
         }
       ],
