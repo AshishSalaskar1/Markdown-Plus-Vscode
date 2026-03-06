@@ -2,7 +2,7 @@
   "name": "markdown-pro",
   "displayName": "Markdown Pro",
   "description": "WYSIWYG markdown editor for VS Code",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publisher": "ashishsalaskar",
   "icon": "Markdown_Plus_Logo_v2.png",
   "license": "MIT",
@@ -251,7 +251,8 @@
   "dependencies": {
     "@milkdown/core": "^7.18.0",
     "@milkdown/crepe": "^7.18.0",
-    "@milkdown/ctx": "^7.18.0"
+    "@milkdown/ctx": "^7.18.0",
+    "mermaid": "^11.0.0"
   },
   "devDependencies": {
     "@types/node": "^25.3.3",

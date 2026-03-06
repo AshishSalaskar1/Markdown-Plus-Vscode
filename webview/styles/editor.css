@@ -550,3 +550,115 @@ body {
 .milkdown .milkdown-code-block .search-box input {
   color: var(--vscode-input-foreground, var(--vscode-editor-foreground)) !important;
 }
+
+/* ---------------------------------------------------------
+   Mermaid Diagram Preview (via Crepe's built-in renderPreview)
+   --------------------------------------------------------- */
+
+.milkdown .milkdown-code-block .preview-panel .preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  overflow: visible;
+  min-height: 40px;
+}
+
+/* ---- Mermaid Viewer (zoom / pan shell) ---- */
+
+.mermaid-viewer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.mermaid-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.15));
+  background: color-mix(in srgb, var(--vscode-editor-background) 60%, transparent);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.mermaid-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.2));
+  border-radius: 4px;
+  background: var(--vscode-editor-background, #1e1e1e);
+  color: var(--vscode-editor-foreground, #ccc);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.mermaid-btn:hover {
+  background: var(--vscode-toolbar-hoverBackground, rgba(128,128,128,.15));
+}
+
+.mermaid-btn:active {
+  background: var(--vscode-toolbar-activeBackground, rgba(128,128,128,.25));
+}
+
+.mermaid-btn svg {
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
+.mermaid-zoom-level {
+  font-size: 11px;
+  min-width: 36px;
+  text-align: center;
+  color: var(--vscode-descriptionForeground, rgba(204,204,204,.7));
+  font-variant-numeric: tabular-nums;
+}
+
+.mermaid-canvas {
+  overflow: hidden;
+  position: relative;
+  min-height: 100px;
+  cursor: grab;
+}
+
+.mermaid-canvas:active {
+  cursor: grabbing;
+}
+
+.mermaid-content {
+  transform-origin: 0 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+  will-change: transform;
+}
+
+.mermaid-content svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---- Mermaid error state ---- */
+
+.mermaid-error-container {
+  border-color: var(--vscode-inputValidation-errorBorder, #be1100);
+  background: var(--vscode-inputValidation-errorBackground, rgba(190, 17, 0, 0.1));
+  border-radius: 4px;
+  width: 100%;
+}
+
+.mermaid-error {
+  color: var(--vscode-errorForeground, #f48771);
+  font-size: 13px;
+  font-style: italic;
+  padding: 8px 12px;
+  text-align: center;
+  user-select: text;
+}

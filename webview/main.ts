@@ -28,6 +28,7 @@ import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/frame.css";
 import "./styles/editor.css";
 import "./styles/themes.css";
+import { mermaidRenderPreview, setActiveTheme, initMermaidViewer } from './mermaid-plugin';
 
 /**
  * Apply a theme by setting the `data-theme` attribute on both the
@@ -317,6 +318,11 @@ function buildToolbar(crepe: Crepe): void {
   const crepe = new Crepe({
     root: document.getElementById("editor")!,
     defaultValue: "",
+    featureConfigs: {
+      [Crepe.Feature.CodeMirror]: {
+        renderPreview: mermaidRenderPreview,
+      },
+    },
   });
 
   await crepe.create();
@@ -326,6 +332,14 @@ function buildToolbar(crepe: Crepe): void {
   // -------------------------------------------------------------------
 
   buildToolbar(crepe);
+
+  // Set initial mermaid theme from the editor's current theme
+  const initialTheme = document.body.getAttribute('data-theme') ?? 'vscode';
+  setActiveTheme(initialTheme);
+
+  // Start the MutationObserver that enhances mermaid previews with
+  // interactive zoom / pan controls.
+  initMermaidViewer();
 
   // -------------------------------------------------------------------
   // Outgoing: content change → extension host  (dual-timer debounce)
@@ -367,6 +381,13 @@ function buildToolbar(crepe: Crepe): void {
 
     if (type === "themeChange" && theme) {
       applyTheme(theme);
+      // Update mermaid theme — new renders will use the updated theme.
+      // Trigger a content refresh to re-render mermaid previews.
+      setActiveTheme(theme);
+      const currentMarkdown = crepe.getMarkdown();
+      suppressOnChange = true;
+      crepe.editor.action(replaceAll(currentMarkdown));
+      suppressOnChange = false;
     }
 
     if (type === "fontSizeChange" && typeof fontSize === "number") {
