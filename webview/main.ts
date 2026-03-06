@@ -28,7 +28,7 @@ import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/frame.css";
 import "./styles/editor.css";
 import "./styles/themes.css";
-import { mermaidRenderPreview, setActiveTheme, initMermaidViewer } from './mermaid-plugin';
+import { mermaidRenderPreview, setActiveTheme, initMermaidViewer, reRenderMermaidDiagrams } from './mermaid-plugin';
 
 /**
  * Apply a theme by setting the `data-theme` attribute on both the
@@ -273,9 +273,13 @@ function initSearchBar(): void {
   const caseBtn = document.getElementById("search-case");
   if (!input) return;
 
+  let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   input.addEventListener("input", () => {
     searchState.query = input.value;
-    applyHighlights(searchState.query, searchState.caseSensitive);
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      applyHighlights(searchState.query, searchState.caseSensitive);
+    }, 150);
   });
 
   input.addEventListener("keydown", (e) => {
@@ -582,6 +586,21 @@ function buildToolbar(crepe: Crepe): void {
 
     if ((type === "init" || type === "update") && version > currentVersion) {
       currentVersion = version;
+
+      // On init, apply all bundled settings before loading content so
+      // mermaid diagrams render with the correct theme on the first pass.
+      if (type === "init") {
+        if (theme) {
+          applyTheme(theme);
+          setActiveTheme(theme);
+        }
+        if (typeof fontSize === "number") applyFontSize(fontSize);
+        if (typeof lineHeight === "number") applyLineHeight(lineHeight);
+        if (typeof fontFamily === "string") applyFontFamily(fontFamily);
+        if (typeof contentWidth === "number") applyContentWidth(contentWidth);
+        if (typeof showToolbar === "boolean") applyShowToolbar(showToolbar);
+      }
+
       suppressOnChange = true;
       crepe.editor.action(replaceAll(markdown));
       suppressOnChange = false;
@@ -590,12 +609,10 @@ function buildToolbar(crepe: Crepe): void {
     if (type === "themeChange" && theme) {
       applyTheme(theme);
       // Update mermaid theme — new renders will use the updated theme.
-      // Trigger a content refresh to re-render mermaid previews.
       setActiveTheme(theme);
-      const currentMarkdown = crepe.getMarkdown();
-      suppressOnChange = true;
-      crepe.editor.action(replaceAll(currentMarkdown));
-      suppressOnChange = false;
+      // Re-render only mermaid diagrams in place instead of replacing
+      // the entire document (avoids expensive full ProseMirror rebuild).
+      reRenderMermaidDiagrams();
     }
 
     if (type === "fontSizeChange" && typeof fontSize === "number") {

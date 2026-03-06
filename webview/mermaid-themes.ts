@@ -58,18 +58,29 @@ function getLuminance(color: string): number {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
 
+/** Cached auto-detected mermaid theme for the 'vscode' extension theme. */
+let cachedVscodeTheme: string | null = null;
+
+/** Invalidate the cached VS Code theme detection. Call on theme change. */
+export function invalidateMermaidThemeCache(): void {
+  cachedVscodeTheme = null;
+}
+
 /**
  * Get the mermaid theme name for a given extension theme ID.
  * When the extension theme is 'vscode', auto-detects light/dark
  * from the VS Code editor background CSS variable.
+ * The result is cached to avoid forcing style recalculation on every render.
  */
 export function getMermaidTheme(extensionTheme: string): string {
   const mapped = THEME_TO_MERMAID[extensionTheme];
   if (mapped === 'auto') {
+    if (cachedVscodeTheme) return cachedVscodeTheme;
     const bg = getComputedStyle(document.body)
       .getPropertyValue('--vscode-editor-background').trim();
     if (bg) {
-      return getLuminance(bg) > 0.5 ? 'default' : 'dark';
+      cachedVscodeTheme = getLuminance(bg) > 0.5 ? 'default' : 'dark';
+      return cachedVscodeTheme;
     }
     return 'dark'; // fallback
   }

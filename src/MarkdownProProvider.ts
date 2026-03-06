@@ -251,34 +251,25 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
     const messageSubscription = webviewPanel.webview.onDidReceiveMessage(
       async (msg: { type: string; markdown?: string; version?: number }) => {
         switch (msg.type) {
-          case 'ready':
-            sendToWebview('init');
-            // Send the current theme and font size to the newly opened webview
+          case 'ready': {
+            // Batch all initial state into a single message to reduce
+            // serialization overhead and avoid a redundant re-render.
+            const initMarkdown = document.getText();
+            lastSentContent = initMarkdown;
+            currentVersion++;
             webviewPanel.webview.postMessage({
-              type: 'themeChange',
+              type: 'init',
+              markdown: initMarkdown,
+              version: currentVersion,
               theme: getActiveTheme(),
-            });
-            webviewPanel.webview.postMessage({
-              type: 'fontSizeChange',
               fontSize: getActiveFontSize(),
-            });
-            webviewPanel.webview.postMessage({
-              type: 'lineHeightChange',
               lineHeight: getActiveLineHeight(),
-            });
-            webviewPanel.webview.postMessage({
-              type: 'fontFamilyChange',
               fontFamily: getActiveFontFamily(),
-            });
-            webviewPanel.webview.postMessage({
-              type: 'contentWidthChange',
               contentWidth: getActiveContentWidth(),
-            });
-            webviewPanel.webview.postMessage({
-              type: 'showToolbarChange',
               showToolbar: getActiveShowToolbar(),
             });
             break;
+          }
 
           case 'edit': {
             const { markdown, version } = msg as {

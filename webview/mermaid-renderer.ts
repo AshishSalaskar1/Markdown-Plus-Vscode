@@ -33,25 +33,35 @@ async function ensureMermaid(theme: string): Promise<typeof import('mermaid')['d
   return mermaidModule.default;
 }
 
+// Serialization queue — ensures only one mermaid.render() runs at a time,
+// preventing corrupt SVG from concurrent renders with global DOM state.
+let renderQueue: Promise<void> = Promise.resolve();
+
 /**
  * Render a mermaid diagram definition to an SVG string.
  * Returns an error HTML string if the diagram is invalid.
+ * Renders are serialized to prevent concurrent mermaid.render() calls.
  */
 export async function renderMermaidDiagram(
   definition: string,
   theme: string,
 ): Promise<{ svg: string; isError: boolean }> {
-  const mermaid = await ensureMermaid(theme);
-  const id = `mermaid-diagram-${++renderCounter}`;
-  try {
-    const { svg } = await mermaid.render(id, definition);
-    return { svg, isError: false };
-  } catch {
-    return {
-      svg: '<div class="mermaid-error">Invalid mermaid diagram syntax</div>',
-      isError: true,
-    };
-  }
+  const result = renderQueue.then(async () => {
+    const mermaid = await ensureMermaid(theme);
+    const id = `mermaid-diagram-${++renderCounter}`;
+    try {
+      const { svg } = await mermaid.render(id, definition);
+      return { svg, isError: false };
+    } catch {
+      return {
+        svg: '<div class="mermaid-error">Invalid mermaid diagram syntax</div>',
+        isError: true,
+      };
+    }
+  });
+  // Keep the chain alive — swallow errors so future renders aren't blocked
+  renderQueue = result.then(() => {}, () => {});
+  return result;
 }
 
 /**

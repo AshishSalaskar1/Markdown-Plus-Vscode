@@ -16,13 +16,15 @@
  */
 
 import { renderMermaidDiagram, resetMermaidTheme } from './mermaid-renderer';
-import { getMermaidTheme } from './mermaid-themes';
+import { getMermaidTheme, invalidateMermaidThemeCache } from './mermaid-themes';
 
 // ---------------------------------------------------------------------------
 // Pending render store — keyed by a unique render-id
 // ---------------------------------------------------------------------------
 let nextRenderId = 0;
 const pendingSvgs = new Map<string, string>();
+/** Mermaid definitions keyed by render ID — used for re-rendering on theme change. */
+const mermaidDefinitions = new Map<string, string>();
 
 /** Current extension theme ID — set externally via setActiveTheme(). */
 let activeTheme = 'vscode';
@@ -35,6 +37,35 @@ let activeTheme = 'vscode';
 export function setActiveTheme(themeId: string): void {
   activeTheme = themeId;
   resetMermaidTheme();
+  invalidateMermaidThemeCache();
+}
+
+/**
+ * Re-render all existing mermaid diagrams in place with the current theme.
+ * Called on theme change to avoid a full document re-render.
+ */
+export async function reRenderMermaidDiagrams(): Promise<void> {
+  const viewers = document.querySelectorAll<HTMLElement>('.mermaid-viewer[data-mermaid-init]');
+  if (viewers.length === 0) return;
+
+  const mermaidTheme = getMermaidTheme(activeTheme);
+  for (const viewer of viewers) {
+    const contentEl = viewer.querySelector<HTMLElement>('.mermaid-content');
+    const renderId = viewer.dataset.mermaidRenderId;
+    if (!contentEl || !renderId) continue;
+
+    const definition = mermaidDefinitions.get(renderId);
+    if (!definition) continue;
+
+    try {
+      const { svg, isError } = await renderMermaidDiagram(definition, mermaidTheme);
+      if (!isError) {
+        contentEl.innerHTML = svg;
+      }
+    } catch {
+      // Silently ignore re-render failures — diagram keeps its previous SVG
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -61,6 +92,8 @@ export function mermaidRenderPreview(
 
   const mermaidTheme = getMermaidTheme(activeTheme);
   const renderId = `mermaid-render-${++nextRenderId}`;
+  // Store definition for potential re-render on theme change.
+  mermaidDefinitions.set(renderId, content);
 
   // Async render
   renderMermaidDiagram(content, mermaidTheme).then(({ svg, isError }) => {
@@ -72,6 +105,8 @@ export function mermaidRenderPreview(
     } else {
       // Store the real SVG for deferred injection.
       pendingSvgs.set(renderId, svg);
+      // Clean up SVG entry after 30s if not consumed by hydrateViewer
+      setTimeout(() => { pendingSvgs.delete(renderId); }, 30_000);
 
       // Pass a lightweight placeholder.  DOMPurify will allow these
       // simple elements through.  The MutationObserver picks up the
@@ -132,7 +167,8 @@ export function initMermaidViewer(): void {
     }
   });
 
-  observer.observe(document.body, { childList: true, subtree: true });
+  const observeTarget = document.getElementById('editor') || document.body;
+  observer.observe(observeTarget, { childList: true, subtree: true });
 
   // Hydrate any viewers that already exist
   document.querySelectorAll<HTMLElement>('.mermaid-viewer').forEach(hydrateViewer);
