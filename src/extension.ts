@@ -52,6 +52,17 @@ export function activate(context: vscode.ExtensionContext): void {
         .update('fontSize', DEFAULT_FONT_SIZE, vscode.ConfigurationTarget.Global);
     }),
   );
+
+  // Register the search command — sends a message to the active webview
+  context.subscriptions.push(
+    vscode.commands.registerCommand('markdownPro.search', () => {
+      for (const panel of provider.getActivePanels()) {
+        if (panel.active) {
+          panel.webview.postMessage({ type: 'toggleSearch' });
+        }
+      }
+    }),
+  );
 }
 
 export function deactivate(): void {

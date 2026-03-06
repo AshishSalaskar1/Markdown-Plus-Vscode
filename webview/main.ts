@@ -105,6 +105,203 @@ function applyShowToolbar(show: boolean): void {
 }
 
 // -------------------------------------------------------------------
+// Search / Find-in-document  (CSS Custom Highlight API — zero DOM mutation)
+// -------------------------------------------------------------------
+
+interface SearchState {
+  open: boolean;
+  query: string;
+  caseSensitive: boolean;
+  /** Range objects for every match (used by CSS Highlight API). */
+  ranges: Range[];
+  currentIndex: number;
+}
+
+const searchState: SearchState = {
+  open: false,
+  query: "",
+  caseSensitive: false,
+  ranges: [],
+  currentIndex: -1,
+};
+
+/**
+ * Find all text ranges matching `query` inside the ProseMirror editor.
+ * Returns an array of Range objects — the DOM is **not** modified.
+ */
+function findMatchRanges(query: string, caseSensitive: boolean): Range[] {
+  const editorEl = document.querySelector(".milkdown .ProseMirror") as HTMLElement | null;
+  if (!editorEl || !query) return [];
+
+  const flags = caseSensitive ? "g" : "gi";
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(escaped, flags);
+
+  const ranges: Range[] = [];
+  const walker = document.createTreeWalker(editorEl, NodeFilter.SHOW_TEXT);
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode as Text;
+    const text = node.textContent ?? "";
+    regex.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(text)) !== null) {
+      const range = new Range();
+      range.setStart(node, match.index);
+      range.setEnd(node, match.index + match[0].length);
+      ranges.push(range);
+      if (match[0].length === 0) regex.lastIndex++;
+    }
+  }
+
+  return ranges;
+}
+
+/** Clear all CSS custom highlights for search. */
+function clearHighlights(): void {
+  CSS.highlights.delete("mdpro-search");
+  CSS.highlights.delete("mdpro-search-active");
+  searchState.ranges = [];
+  searchState.currentIndex = -1;
+}
+
+/** Run the search and register highlights via the CSS Custom Highlight API. */
+function applyHighlights(query: string, caseSensitive: boolean): void {
+  clearHighlights();
+  if (!query) {
+    updateSearchCount();
+    return;
+  }
+
+  const ranges = findMatchRanges(query, caseSensitive);
+  searchState.ranges = ranges;
+  searchState.currentIndex = ranges.length > 0 ? 0 : -1;
+
+  if (ranges.length > 0) {
+    const allHighlight = new Highlight(...ranges);
+    allHighlight.priority = 1;
+    CSS.highlights.set("mdpro-search", allHighlight);
+  }
+
+  highlightCurrent();
+  updateSearchCount();
+}
+
+/** Mark the current match as active (different colour) and scroll to it. */
+function highlightCurrent(): void {
+  CSS.highlights.delete("mdpro-search-active");
+
+  if (searchState.currentIndex >= 0 && searchState.currentIndex < searchState.ranges.length) {
+    const activeRange = searchState.ranges[searchState.currentIndex];
+    const activeHighlight = new Highlight(activeRange);
+    activeHighlight.priority = 2;
+    CSS.highlights.set("mdpro-search-active", activeHighlight);
+
+    // Scroll the match into view
+    const rect = activeRange.getBoundingClientRect();
+    const scrollContainer = document.scrollingElement ?? document.documentElement;
+    const viewTop = scrollContainer.scrollTop;
+    const viewBottom = viewTop + window.innerHeight;
+    const absTop = rect.top + viewTop;
+    if (absTop < viewTop + 80 || absTop > viewBottom - 80) {
+      scrollContainer.scrollTo({ top: absTop - window.innerHeight / 3, behavior: "smooth" });
+    }
+  }
+}
+
+/** Update the \u201cN of M\u201d counter in the search bar. */
+function updateSearchCount(): void {
+  const countEl = document.getElementById("search-count");
+  if (!countEl) return;
+  const total = searchState.ranges.length;
+  if (!searchState.query || total === 0) {
+    countEl.textContent = searchState.query ? "No results" : "";
+  } else {
+    countEl.textContent = `${searchState.currentIndex + 1} of ${total}`;
+  }
+}
+
+function goToNextMatch(): void {
+  if (searchState.ranges.length === 0) return;
+  searchState.currentIndex = (searchState.currentIndex + 1) % searchState.ranges.length;
+  highlightCurrent();
+  updateSearchCount();
+}
+
+function goToPrevMatch(): void {
+  if (searchState.ranges.length === 0) return;
+  searchState.currentIndex =
+    (searchState.currentIndex - 1 + searchState.ranges.length) % searchState.ranges.length;
+  highlightCurrent();
+  updateSearchCount();
+}
+
+function openSearchBar(): void {
+  const bar = document.getElementById("search-bar");
+  const input = document.getElementById("search-input") as HTMLInputElement | null;
+  if (!bar || !input) return;
+  bar.classList.remove("hidden");
+  searchState.open = true;
+  input.focus();
+  input.select();
+}
+
+function closeSearchBar(): void {
+  const bar = document.getElementById("search-bar");
+  if (!bar) return;
+  bar.classList.add("hidden");
+  searchState.open = false;
+  searchState.query = "";
+  clearHighlights();
+  updateSearchCount();
+}
+
+function toggleSearchBar(): void {
+  if (searchState.open) {
+    const input = document.getElementById("search-input") as HTMLInputElement | null;
+    if (input) { input.focus(); input.select(); }
+  } else {
+    openSearchBar();
+  }
+}
+
+function initSearchBar(): void {
+  const input = document.getElementById("search-input") as HTMLInputElement | null;
+  const prevBtn = document.getElementById("search-prev");
+  const nextBtn = document.getElementById("search-next");
+  const closeBtn = document.getElementById("search-close");
+  const caseBtn = document.getElementById("search-case");
+  if (!input) return;
+
+  input.addEventListener("input", () => {
+    searchState.query = input.value;
+    applyHighlights(searchState.query, searchState.caseSensitive);
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (e.shiftKey) { goToPrevMatch(); } else { goToNextMatch(); }
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      closeSearchBar();
+    }
+  });
+
+  prevBtn?.addEventListener("click", (e) => { e.preventDefault(); goToPrevMatch(); });
+  nextBtn?.addEventListener("click", (e) => { e.preventDefault(); goToNextMatch(); });
+  closeBtn?.addEventListener("click", (e) => { e.preventDefault(); closeSearchBar(); });
+
+  caseBtn?.addEventListener("click", (e) => {
+    e.preventDefault();
+    searchState.caseSensitive = !searchState.caseSensitive;
+    caseBtn.classList.toggle("active", searchState.caseSensitive);
+    applyHighlights(searchState.query, searchState.caseSensitive);
+  });
+}
+
+// -------------------------------------------------------------------
 // Toolbar builder — creates a modern editing bar above the editor
 // -------------------------------------------------------------------
 
@@ -124,6 +321,7 @@ const ICONS: Record<string, string> = {
   image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
   table: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>',
   hr: '<line x1="2" y1="12" x2="22" y2="12"/>',
+  search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
 };
 
 function svgIcon(name: string, cls = ""): string {
@@ -216,6 +414,13 @@ const toolbarItems: ToolbarItem[] = [
     icon: "hr",
     tooltip: "Horizontal Rule",
     action: (c) => c.editor.action(callCommand(insertHrCommand.key)),
+  },
+  { kind: "separator" },
+  {
+    kind: "button",
+    icon: "search",
+    tooltip: "Find (Ctrl+F)",
+    action: () => toggleSearchBar(),
   },
 ];
 
@@ -333,6 +538,9 @@ function buildToolbar(crepe: Crepe): void {
 
   buildToolbar(crepe);
 
+  // Initialise the search bar
+  initSearchBar();
+
   // Set initial mermaid theme from the editor's current theme
   const initialTheme = document.body.getAttribute('data-theme') ?? 'vscode';
   setActiveTheme(initialTheme);
@@ -408,6 +616,10 @@ function buildToolbar(crepe: Crepe): void {
 
     if (type === "showToolbarChange" && typeof showToolbar === "boolean") {
       applyShowToolbar(showToolbar);
+    }
+
+    if (type === "toggleSearch") {
+      toggleSearchBar();
     }
   });
 

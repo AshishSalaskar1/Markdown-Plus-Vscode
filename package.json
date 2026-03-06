@@ -2,7 +2,7 @@
   "name": "markdown-pro",
   "displayName": "Markdown Pro",
   "description": "WYSIWYG markdown editor for VS Code",
-  "version": "0.5.0",
+  "version": "0.6.1",
   "publisher": "ashishsalaskar",
   "icon": "Markdown_Plus_Logo_v2.png",
   "license": "MIT",
@@ -74,6 +74,12 @@
         "key": "ctrl+shift+m",
         "mac": "cmd+shift+m",
         "when": "resourceLangId =~ /^(markdown|prompt|instructions|chatagent|skill)$/"
+      },
+      {
+        "command": "markdownPro.search",
+        "key": "ctrl+f",
+        "mac": "cmd+f",
+        "when": "activeCustomEditorId == 'markdownPro.editor'"
       }
     ],
     "commands": [
@@ -102,6 +108,12 @@
         "command": "markdownPro.resetFontSize",
         "title": "Reset Font Size",
         "category": "Markdown Pro"
+      },
+      {
+        "command": "markdownPro.search",
+        "title": "Find in Document",
+        "category": "Markdown Pro",
+        "icon": "$(search)"
       }
     ],
     "menus": {
@@ -147,6 +159,10 @@
         },
         {
           "command": "markdownPro.resetFontSize"
+        },
+        {
+          "command": "markdownPro.search",
+          "when": "activeCustomEditorId == 'markdownPro.editor'"
         }
       ]
     },
