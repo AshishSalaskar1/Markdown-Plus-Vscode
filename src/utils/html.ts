@@ -58,6 +58,18 @@ export function getWebviewHtml(
     </div>
   </div>
   <div id="toolbar"></div>
+  <section id="frontmatter-panel" class="frontmatter-panel hidden" aria-label="Document properties">
+    <div class="frontmatter-panel-header">
+      <span class="frontmatter-panel-title">Properties</span>
+      <span class="frontmatter-panel-hint">YAML frontmatter</span>
+    </div>
+    <textarea
+      id="frontmatter-input"
+      class="frontmatter-input"
+      spellcheck="false"
+      aria-label="Markdown document properties"
+    ></textarea>
+  </section>
   <div id="editor"></div>
   <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>

@@ -69,6 +69,63 @@ body {
   margin: 0 auto;
 }
 
+#frontmatter-panel {
+  max-width: var(--mdpro-content-width, 900px);
+  margin: 16px auto 18px;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.2));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--vscode-editor-background) 88%, var(--vscode-textCodeBlock-background) 12%);
+  box-sizing: border-box;
+}
+
+#frontmatter-panel.hidden {
+  display: none;
+}
+
+.frontmatter-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.frontmatter-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--vscode-editor-foreground);
+}
+
+.frontmatter-panel-hint {
+  font-size: 11px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--vscode-descriptionForeground, rgba(128,128,128,.75));
+}
+
+.frontmatter-input {
+  display: block;
+  width: 100%;
+  min-height: 96px;
+  padding: 12px 14px;
+  border: 1px solid var(--vscode-input-border, rgba(128,128,128,.3));
+  border-radius: 8px;
+  background: var(--vscode-textCodeBlock-background, rgba(128,128,128,.08));
+  color: var(--vscode-editor-foreground);
+  font-family: var(--vscode-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", monospace);
+  font-size: 13px;
+  line-height: 1.6;
+  box-sizing: border-box;
+  resize: vertical;
+  overflow: hidden;
+}
+
+.frontmatter-input:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 1px;
+}
+
 /* ---------------------------------------------------------
    3a. Search / Find bar
    --------------------------------------------------------- */

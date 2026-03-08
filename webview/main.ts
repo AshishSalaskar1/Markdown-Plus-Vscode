@@ -104,6 +104,75 @@ function applyShowToolbar(show: boolean): void {
   }
 }
 
+interface ParsedDocument {
+  frontmatter: string;
+  body: string;
+  hasFrontmatter: boolean;
+}
+
+const FRONTMATTER_REGEX =
+  /^(?<frontmatter>\uFEFF?---(?:\r?\n)[\s\S]*?(?:\r?\n)(?:---|\.\.\.))(?<body>(?:\r?\n[\s\S]*)?)$/;
+
+function splitMarkdownDocument(markdown: string): ParsedDocument {
+  const match = markdown.match(FRONTMATTER_REGEX);
+  const frontmatter = match?.groups?.frontmatter;
+
+  if (!frontmatter) {
+    return {
+      frontmatter: "",
+      body: markdown,
+      hasFrontmatter: false,
+    };
+  }
+
+  return {
+    frontmatter,
+    body: match.groups?.body ?? "",
+    hasFrontmatter: true,
+  };
+}
+
+function combineMarkdownDocument(frontmatter: string, body: string): string {
+  if (!frontmatter) {
+    return body;
+  }
+
+  if (!body) {
+    return frontmatter;
+  }
+
+  if (body.startsWith("\n") || body.startsWith("\r\n")) {
+    return `${frontmatter}${body}`;
+  }
+
+  return `${frontmatter}\n${body}`;
+}
+
+function autoSizeFrontmatterInput(input: HTMLTextAreaElement): void {
+  input.style.height = "0px";
+  input.style.height = `${Math.max(input.scrollHeight, 96)}px`;
+}
+
+function renderFrontmatterPanel(frontmatter: string): void {
+  const panel = document.getElementById("frontmatter-panel");
+  const input = document.getElementById("frontmatter-input") as HTMLTextAreaElement | null;
+
+  if (!panel || !input) {
+    return;
+  }
+
+  if (!frontmatter) {
+    panel.classList.add("hidden");
+    input.value = "";
+    input.style.height = "";
+    return;
+  }
+
+  panel.classList.remove("hidden");
+  input.value = frontmatter;
+  autoSizeFrontmatterInput(input);
+}
+
 // -------------------------------------------------------------------
 // Search / Find-in-document  (CSS Custom Highlight API — zero DOM mutation)
 // -------------------------------------------------------------------
@@ -516,9 +585,34 @@ function buildToolbar(crepe: Crepe): void {
   let suppressOnChange = false;
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   let lastEditTime = 0;
+  let currentFrontmatter = "";
+  let currentBodyMarkdown = "";
 
   const DEBOUNCE_TYPING = 150;
   const DEBOUNCE_IDLE = 50;
+
+  const frontmatterInput = document.getElementById("frontmatter-input") as HTMLTextAreaElement | null;
+
+  function scheduleDocumentSync(): void {
+    const now = Date.now();
+    const timeSinceLastEdit = now - lastEditTime;
+    lastEditTime = now;
+
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+    }
+
+    const delay = timeSinceLastEdit > 500 ? DEBOUNCE_IDLE : DEBOUNCE_TYPING;
+
+    debounceTimer = setTimeout(() => {
+      currentVersion++;
+      vscode.postMessage({
+        type: "edit",
+        markdown: combineMarkdownDocument(currentFrontmatter, currentBodyMarkdown),
+        version: currentVersion,
+      });
+    }, delay);
+  }
 
   // -------------------------------------------------------------------
   // Milkdown Crepe initialisation
@@ -545,6 +639,14 @@ function buildToolbar(crepe: Crepe): void {
   // Initialise the search bar
   initSearchBar();
 
+  if (frontmatterInput) {
+    frontmatterInput.addEventListener("input", () => {
+      currentFrontmatter = frontmatterInput.value;
+      autoSizeFrontmatterInput(frontmatterInput);
+      scheduleDocumentSync();
+    });
+  }
+
   // Set initial mermaid theme from the editor's current theme
   const initialTheme = document.body.getAttribute('data-theme') ?? 'vscode';
   setActiveTheme(initialTheme);
@@ -561,19 +663,8 @@ function buildToolbar(crepe: Crepe): void {
     listener.markdownUpdated((_ctx: any, markdown: string, prevMarkdown: string) => {
       if (suppressOnChange || markdown === prevMarkdown) return;
 
-      const now = Date.now();
-      const timeSinceLastEdit = now - lastEditTime;
-      lastEditTime = now;
-
-      if (debounceTimer) clearTimeout(debounceTimer);
-
-      // Shorter debounce when idle, longer during rapid typing.
-      const delay = timeSinceLastEdit > 500 ? DEBOUNCE_IDLE : DEBOUNCE_TYPING;
-
-      debounceTimer = setTimeout(() => {
-        currentVersion++;
-        vscode.postMessage({ type: "edit", markdown, version: currentVersion });
-      }, delay);
+      currentBodyMarkdown = markdown;
+      scheduleDocumentSync();
     });
   });
 
@@ -584,7 +675,7 @@ function buildToolbar(crepe: Crepe): void {
   window.addEventListener("message", (event) => {
     const { type, markdown, version, theme, fontSize, lineHeight, fontFamily, contentWidth, showToolbar } = event.data;
 
-    if ((type === "init" || type === "update") && version > currentVersion) {
+    if ((type === "init" || type === "update") && typeof markdown === "string" && version > currentVersion) {
       currentVersion = version;
 
       // On init, apply all bundled settings before loading content so
@@ -601,8 +692,13 @@ function buildToolbar(crepe: Crepe): void {
         if (typeof showToolbar === "boolean") applyShowToolbar(showToolbar);
       }
 
+      const parsedDocument = splitMarkdownDocument(markdown);
+      currentFrontmatter = parsedDocument.frontmatter;
+      currentBodyMarkdown = parsedDocument.body;
+      renderFrontmatterPanel(currentFrontmatter);
+
       suppressOnChange = true;
-      crepe.editor.action(replaceAll(markdown));
+      crepe.editor.action(replaceAll(currentBodyMarkdown));
       suppressOnChange = false;
     }
 
