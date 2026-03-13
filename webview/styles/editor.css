@@ -406,6 +406,7 @@ body {
   padding: 16px 26px !important;
   outline: none;
   min-height: 100px;
+  caret-color: var(--vscode-editorCursor-foreground, var(--vscode-editor-foreground));
 }
 
 .milkdown .ProseMirror:focus-visible {
@@ -573,8 +574,9 @@ body {
   font-size: 85% !important;
   padding: 0.2em 0.4em !important;
   border-radius: 3px !important;
-  display: inline !important;
-  line-height: inherit !important;
+  display: inline-block !important;
+  line-height: 1.4286 !important;
+  caret-color: var(--vscode-editorCursor-foreground, var(--vscode-editor-foreground)) !important;
 }
 
 /* ---------------------------------------------------------
