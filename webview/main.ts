@@ -11,6 +11,7 @@ import {
   toggleStrongCommand,
   toggleEmphasisCommand,
   toggleInlineCodeCommand,
+  listItemSchema,
   wrapInHeadingCommand,
   wrapInBlockquoteCommand,
   wrapInBulletListCommand,
@@ -148,6 +149,43 @@ function combineMarkdownDocument(frontmatter: string, body: string): string {
   return `${frontmatter}\n${body}`;
 }
 
+const LIST_ITEM_LINE_REGEX = /^(\s{0,3})(?:[-+*]|\d+[.)])\s+/;
+
+function isTightListBoundary(previousLine: string, nextLine: string): boolean {
+  const previousMatch = previousLine.match(LIST_ITEM_LINE_REGEX);
+  const nextMatch = nextLine.match(LIST_ITEM_LINE_REGEX);
+
+  if (!previousMatch || !nextMatch) {
+    return false;
+  }
+
+  return previousMatch[1].length === nextMatch[1].length;
+}
+
+function normalizeListSpacing(markdown: string): string {
+  const eol = markdown.includes("\r\n") ? "\r\n" : "\n";
+  const lines = markdown.split(/\r?\n/);
+  const normalized: string[] = [];
+
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index];
+
+    if (
+      line.trim() === "" &&
+      normalized.length > 0 &&
+      index + 1 < lines.length &&
+      lines[index + 1].trim() !== "" &&
+      isTightListBoundary(normalized[normalized.length - 1], lines[index + 1])
+    ) {
+      continue;
+    }
+
+    normalized.push(line);
+  }
+
+  return normalized.join(eol);
+}
+
 function autoSizeFrontmatterInput(input: HTMLTextAreaElement): void {
   input.style.height = "0px";
   input.style.height = `${Math.max(input.scrollHeight, 96)}px`;
@@ -172,6 +210,35 @@ function renderFrontmatterPanel(frontmatter: string): void {
   input.value = frontmatter;
   autoSizeFrontmatterInput(input);
 }
+
+const tightListItemSchema = listItemSchema.extendSchema((prev) => {
+  return (ctx) => {
+    const baseSchema = prev(ctx);
+
+    return {
+      ...baseSchema,
+      attrs: {
+        ...baseSchema.attrs,
+        spread: {
+          default: false,
+          validate: "boolean",
+        },
+      },
+      parseMarkdown: {
+        ...baseSchema.parseMarkdown,
+        runner: (state, node, type) => {
+          const label = node.label != null ? `${node.label}.` : "•";
+          const listType = node.label != null ? "ordered" : "bullet";
+          const spread = node.spread != null ? `${node.spread}` : "false";
+
+          state.openNode(type, { label, listType, spread });
+          state.next(node.children);
+          state.closeNode();
+        },
+      },
+    };
+  };
+});
 
 // -------------------------------------------------------------------
 // Search / Find-in-document  (CSS Custom Highlight API — zero DOM mutation)
@@ -608,7 +675,10 @@ function buildToolbar(crepe: Crepe): void {
       currentVersion++;
       vscode.postMessage({
         type: "edit",
-        markdown: combineMarkdownDocument(currentFrontmatter, currentBodyMarkdown),
+        markdown: combineMarkdownDocument(
+          currentFrontmatter,
+          normalizeListSpacing(currentBodyMarkdown),
+        ),
         version: currentVersion,
       });
     }, delay);
@@ -627,6 +697,8 @@ function buildToolbar(crepe: Crepe): void {
       },
     },
   });
+
+  crepe.editor.use(tightListItemSchema);
 
   await crepe.create();
 
