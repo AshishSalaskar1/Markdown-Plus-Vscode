@@ -1,4 +1,4 @@
-# Changelog - TEST - TEST
+# Changelog 
 
 All notable changes to the **Markdown Pro** extension will be documented in this file.
 
