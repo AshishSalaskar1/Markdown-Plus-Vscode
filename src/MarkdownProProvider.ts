@@ -223,7 +223,7 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
     const docChangeSubscription = vscode.workspace.onDidChangeTextDocument(
       (e) => {
         // Only react to changes in *our* document.
-        if (e.document.uri.toString() !== document.uri.toString()) {
+        if (e.document !== document) {
           return;
         }
 
@@ -277,10 +277,19 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
               version: number;
             };
 
+            // Ignore delayed messages from retained/background webviews.
+            if (!webviewPanel.visible || !webviewPanel.active) {
+              return;
+            }
+
             // Guard 3: discard stale messages.
             if (version < currentVersion) {
               return;
             }
+
+            // Keep both sides on the same monotonic clock so later text-editor
+            // updates are never mistaken for stale messages.
+            currentVersion = version;
 
             // Extra safety: no-op if content is identical.
             if (markdown === document.getText()) {

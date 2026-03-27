@@ -2,7 +2,7 @@
   "name": "markdown-pro",
   "displayName": "Markdown Pro",
   "description": "WYSIWYG markdown editor for VS Code",
-  "version": "0.7.2",
+  "version": "0.7.4",
   "publisher": "ashishsalaskar",
   "icon": "Markdown_Plus_Logo_v2.png",
   "license": "MIT",
@@ -222,8 +222,8 @@
         "markdownPro.lineHeight": {
           "type": "number",
           "default": 1.6,
-          "minimum": 1.0,
-          "maximum": 3.0,
+          "minimum": 1,
+          "maximum": 3,
           "markdownDescription": "Line height (line spacing) for the Markdown Pro editor. Values like `1.4` for compact, `1.6` for normal, or `2.0` for relaxed spacing."
         },
         "markdownPro.fontFamily": {

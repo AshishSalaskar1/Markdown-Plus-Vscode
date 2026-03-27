@@ -660,18 +660,31 @@ function buildToolbar(crepe: Crepe): void {
 
   const frontmatterInput = document.getElementById("frontmatter-input") as HTMLTextAreaElement | null;
 
+  function cancelDocumentSync(): void {
+    if (!debounceTimer) {
+      return;
+    }
+
+    clearTimeout(debounceTimer);
+    debounceTimer = null;
+  }
+
   function scheduleDocumentSync(): void {
     const now = Date.now();
     const timeSinceLastEdit = now - lastEditTime;
     lastEditTime = now;
 
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-    }
+    cancelDocumentSync();
 
     const delay = timeSinceLastEdit > 500 ? DEBOUNCE_IDLE : DEBOUNCE_TYPING;
 
     debounceTimer = setTimeout(() => {
+      debounceTimer = null;
+
+      if (document.visibilityState !== "visible" || !document.hasFocus()) {
+        return;
+      }
+
       currentVersion++;
       vscode.postMessage({
         type: "edit",
@@ -719,6 +732,13 @@ function buildToolbar(crepe: Crepe): void {
     });
   }
 
+  window.addEventListener("blur", cancelDocumentSync);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") {
+      cancelDocumentSync();
+    }
+  });
+
   // Set initial mermaid theme from the editor's current theme
   const initialTheme = document.body.getAttribute('data-theme') ?? 'vscode';
   setActiveTheme(initialTheme);
@@ -748,6 +768,7 @@ function buildToolbar(crepe: Crepe): void {
     const { type, markdown, version, theme, fontSize, lineHeight, fontFamily, contentWidth, showToolbar } = event.data;
 
     if ((type === "init" || type === "update") && typeof markdown === "string" && version > currentVersion) {
+      cancelDocumentSync();
       currentVersion = version;
 
       // On init, apply all bundled settings before loading content so
