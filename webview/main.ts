@@ -6,6 +6,7 @@
  */
 
 import { Crepe } from "@milkdown/crepe";
+import { remarkStringifyOptionsCtx } from "@milkdown/core";
 import { replaceAll, callCommand } from "@milkdown/utils";
 import {
   toggleStrongCommand,
@@ -149,41 +150,261 @@ function combineMarkdownDocument(frontmatter: string, body: string): string {
   return `${frontmatter}\n${body}`;
 }
 
-const LIST_ITEM_LINE_REGEX = /^(\s{0,3})(?:[-+*]|\d+[.)])\s+/;
-
-function isTightListBoundary(previousLine: string, nextLine: string): boolean {
-  const previousMatch = previousLine.match(LIST_ITEM_LINE_REGEX);
-  const nextMatch = nextLine.match(LIST_ITEM_LINE_REGEX);
-
-  if (!previousMatch || !nextMatch) {
-    return false;
-  }
-
-  return previousMatch[1].length === nextMatch[1].length;
+function detectLineEnding(markdown: string): "\r\n" | "\n" {
+  return markdown.includes("\r\n") ? "\r\n" : "\n";
 }
 
-function normalizeListSpacing(markdown: string): string {
-  const eol = markdown.includes("\r\n") ? "\r\n" : "\n";
-  const lines = markdown.split(/\r?\n/);
-  const normalized: string[] = [];
+function applyStoredLineEnding(markdown: string, eol: "\r\n" | "\n"): string {
+  return markdown.replace(/\r?\n/g, eol);
+}
 
-  for (let index = 0; index < lines.length; index++) {
-    const line = lines[index];
+function preserveTrailingNewline(
+  markdown: string,
+  eol: "\r\n" | "\n",
+  shouldEndWithNewline: boolean,
+): string {
+  if (shouldEndWithNewline) {
+    return markdown.endsWith(eol) ? markdown : `${markdown}${eol}`;
+  }
 
+  if (markdown.endsWith("\r\n")) {
+    return markdown.slice(0, -2);
+  }
+
+  if (markdown.endsWith("\n")) {
+    return markdown.slice(0, -1);
+  }
+
+  return markdown;
+}
+
+function normalizeMarkdownForStorage(
+  markdown: string,
+  eol: "\r\n" | "\n",
+  shouldEndWithNewline: boolean,
+): string {
+  return preserveTrailingNewline(
+    applyStoredLineEnding(markdown, eol),
+    eol,
+    shouldEndWithNewline,
+  );
+}
+
+function restoreCalloutMarkers(sourceMarkdown: string, markdown: string): string {
+  const sourceMarkers = new Set(
+    [...sourceMarkdown.matchAll(/(?<!\\)\[![A-Z][A-Z0-9_-]*\]/g)].map((match) => match[0]),
+  );
+
+  let restored = markdown;
+  for (const marker of sourceMarkers) {
+    restored = restored.replaceAll(`\\${marker}`, marker);
+  }
+
+  return restored;
+}
+
+type UnorderedListMarker = "-" | "+" | "*";
+type OrderedListDelimiter = "." | ")";
+
+interface ListFormattingPreferences {
+  unorderedMarkers: Map<number, UnorderedListMarker>;
+  orderedDelimiters: Map<number, OrderedListDelimiter>;
+  looseUnorderedIndents: Set<number>;
+  looseOrderedIndents: Set<number>;
+}
+
+function getListFormattingPreferences(sourceMarkdown: string): ListFormattingPreferences {
+  const sourceLines = sourceMarkdown.split(/\r?\n/);
+  const unorderedMarkers = new Map<number, UnorderedListMarker>();
+  const orderedDelimiters = new Map<number, OrderedListDelimiter>();
+  const looseUnorderedIndents = new Set<number>();
+  const looseOrderedIndents = new Set<number>();
+
+  for (let index = 0; index < sourceLines.length; index++) {
+    const line = sourceLines[index];
+
+    const unorderedMatch = line.match(/^(\s*)([-+*])(\s+.*)$/);
+    if (unorderedMatch) {
+      const indent = unorderedMatch[1].length;
+      if (!unorderedMarkers.has(indent)) {
+        unorderedMarkers.set(indent, unorderedMatch[2] as UnorderedListMarker);
+      }
+    }
+
+    const orderedMatch = line.match(/^(\s*)(\d+)([.)])(\s+.*)$/);
+    if (orderedMatch) {
+      const indent = orderedMatch[1].length;
+      if (!orderedDelimiters.has(indent)) {
+        orderedDelimiters.set(indent, orderedMatch[3] as OrderedListDelimiter);
+      }
+    }
+
+    if (line.trim() !== "" || index === 0 || index === sourceLines.length - 1) {
+      continue;
+    }
+
+    const previousLine = sourceLines[index - 1];
+    const nextLine = sourceLines[index + 1];
+
+    const previousUnorderedMatch = previousLine.match(/^(\s*)([-+*])(\s+.*)$/);
+    const nextUnorderedMatch = nextLine.match(/^(\s*)([-+*])(\s+.*)$/);
     if (
-      line.trim() === "" &&
-      normalized.length > 0 &&
-      index + 1 < lines.length &&
-      lines[index + 1].trim() !== "" &&
-      isTightListBoundary(normalized[normalized.length - 1], lines[index + 1])
+      previousUnorderedMatch &&
+      nextUnorderedMatch &&
+      previousUnorderedMatch[1] === nextUnorderedMatch[1]
+    ) {
+      looseUnorderedIndents.add(previousUnorderedMatch[1].length);
+    }
+
+    const previousOrderedMatch = previousLine.match(/^(\s*)(\d+)([.)])(\s+.*)$/);
+    const nextOrderedMatch = nextLine.match(/^(\s*)(\d+)([.)])(\s+.*)$/);
+    if (
+      previousOrderedMatch &&
+      nextOrderedMatch &&
+      previousOrderedMatch[1] === nextOrderedMatch[1]
+    ) {
+      looseOrderedIndents.add(previousOrderedMatch[1].length);
+    }
+  }
+
+  return {
+    unorderedMarkers,
+    orderedDelimiters,
+    looseUnorderedIndents,
+    looseOrderedIndents,
+  };
+}
+
+function restoreListMarkers(sourceMarkdown: string, markdown: string): string {
+  const eol = markdown.includes("\r\n") ? "\r\n" : "\n";
+  const newLines = markdown.split(/\r?\n/);
+  const preferences = getListFormattingPreferences(sourceMarkdown);
+
+  for (let index = 0; index < newLines.length; index++) {
+    const newLine = newLines[index];
+
+    const newBulletMatch = newLine.match(/^(\s*)([-+*])(\s+.*)$/);
+    if (newBulletMatch) {
+      const indent = newBulletMatch[1].length;
+      const preferredMarker = preferences.unorderedMarkers.get(indent);
+      if (preferredMarker) {
+        newLines[index] = `${newBulletMatch[1]}${preferredMarker}${newBulletMatch[3]}`;
+      }
+    }
+
+    const newOrderedMatch = newLine.match(/^(\s*)(\d+)([.)])(\s+.*)$/);
+    if (newOrderedMatch) {
+      const indent = newOrderedMatch[1].length;
+      const preferredDelimiter = preferences.orderedDelimiters.get(indent);
+      if (preferredDelimiter) {
+        newLines[index] = `${newOrderedMatch[1]}${newOrderedMatch[2]}${preferredDelimiter}${newOrderedMatch[4]}`;
+      }
+    }
+  }
+
+  const normalizedLines: string[] = [];
+  for (let index = 0; index < newLines.length; index++) {
+    const line = newLines[index];
+
+    if (line.trim() !== "") {
+      normalizedLines.push(line);
+      continue;
+    }
+
+    const previousLine = normalizedLines[normalizedLines.length - 1] ?? "";
+    let nextNonEmptyLine = "";
+    for (let nextIndex = index + 1; nextIndex < newLines.length; nextIndex++) {
+      if (newLines[nextIndex].trim() !== "") {
+        nextNonEmptyLine = newLines[nextIndex];
+        break;
+      }
+    }
+
+    const previousUnorderedMatch = previousLine.match(/^(\s*)([-+*])(\s+.*)$/);
+    const nextUnorderedMatch = nextNonEmptyLine.match(/^(\s*)([-+*])(\s+.*)$/);
+    if (
+      previousUnorderedMatch &&
+      nextUnorderedMatch &&
+      previousUnorderedMatch[1] === nextUnorderedMatch[1] &&
+      !preferences.looseUnorderedIndents.has(previousUnorderedMatch[1].length)
     ) {
       continue;
     }
 
-    normalized.push(line);
+    const previousOrderedMatch = previousLine.match(/^(\s*)(\d+)([.)])(\s+.*)$/);
+    const nextOrderedMatch = nextNonEmptyLine.match(/^(\s*)(\d+)([.)])(\s+.*)$/);
+    if (
+      previousOrderedMatch &&
+      nextOrderedMatch &&
+      previousOrderedMatch[1] === nextOrderedMatch[1] &&
+      !preferences.looseOrderedIndents.has(previousOrderedMatch[1].length)
+    ) {
+      continue;
+    }
+
+    normalizedLines.push(line);
   }
 
-  return normalized.join(eol);
+  return normalizedLines.join(eol);
+}
+
+function preserveExistingMarkdownSyntax(sourceMarkdown: string, markdown: string): string {
+  return restoreListMarkers(
+    sourceMarkdown,
+    restoreCalloutMarkers(sourceMarkdown, markdown),
+  );
+}
+
+function detectSerializerOptions(markdown: string): Partial<{
+  bullet: "-" | "+" | "*";
+  bulletOther: "-" | "+" | "*";
+  bulletOrdered: "." | ")";
+  emphasis: "*" | "_";
+  strong: "*" | "_";
+}> {
+  const options: Partial<{
+    bullet: "-" | "+" | "*";
+    bulletOther: "-" | "+" | "*";
+    bulletOrdered: "." | ")";
+    emphasis: "*" | "_";
+    strong: "*" | "_";
+  }> = {};
+
+  const bulletMatch = markdown.match(/^\s*([-+*])\s+/m);
+  if (bulletMatch) {
+    const bullet = bulletMatch[1] as "-" | "+" | "*";
+    options.bullet = bullet;
+    options.bulletOther = bullet === "-" ? "*" : "-";
+  }
+
+  const orderedBulletMatch = markdown.match(/^\s*\d+([.)])\s+/m);
+  if (orderedBulletMatch) {
+    options.bulletOrdered = orderedBulletMatch[1] as "." | ")";
+  }
+
+  const strongMatch = markdown.match(/(^|[^\w\\])(\*\*|__)(?=\S)/m);
+  if (strongMatch) {
+    options.strong = strongMatch[2] === "__" ? "_" : "*";
+  }
+
+  const emphasisMatch = markdown.match(/(^|[^\w\\])(\*|_)(?=\S)(?!\2)/m);
+  if (emphasisMatch) {
+    options.emphasis = emphasisMatch[2] as "*" | "_";
+  }
+
+  return options;
+}
+
+function isPotentialEditingKey(event: KeyboardEvent): boolean {
+  if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
+    return true;
+  }
+
+  if (["Enter", "Backspace", "Delete", "Tab"].includes(event.key)) {
+    return true;
+  }
+
+  return (event.ctrlKey || event.metaKey) && ["b", "i", "z", "y", "]", "["].includes(event.key.toLowerCase());
 }
 
 function autoSizeFrontmatterInput(input: HTMLTextAreaElement): void {
@@ -564,7 +785,7 @@ const toolbarItems: ToolbarItem[] = [
   },
 ];
 
-function buildToolbar(crepe: Crepe): void {
+function buildToolbar(crepe: Crepe, onBeforeAction: () => void): void {
   const container = document.getElementById("toolbar");
   if (!container) return;
 
@@ -603,6 +824,7 @@ function buildToolbar(crepe: Crepe): void {
         btn.innerHTML = `<span style="font-size:${h.size}">${h.label}</span>`;
         btn.addEventListener("mousedown", (e) => {
           e.preventDefault();
+          onBeforeAction();
           crepe.editor.action(callCommand(wrapInHeadingCommand.key, h.level));
           menu.classList.remove("open");
         });
@@ -634,6 +856,7 @@ function buildToolbar(crepe: Crepe): void {
     btn.setAttribute("data-tooltip", item.tooltip!);
     btn.addEventListener("mousedown", (e) => {
       e.preventDefault(); // keep editor focus
+      onBeforeAction();
       item.action?.(crepe);
     });
     container.appendChild(btn);
@@ -654,11 +877,29 @@ function buildToolbar(crepe: Crepe): void {
   let lastEditTime = 0;
   let currentFrontmatter = "";
   let currentBodyMarkdown = "";
+  let currentEol: "\r\n" | "\n" = "\n";
+  let hasTrailingNewline = false;
+  let hasPendingUserChange = false;
+  let sourceMarkdown = "";
 
   const DEBOUNCE_TYPING = 150;
   const DEBOUNCE_IDLE = 50;
 
   const frontmatterInput = document.getElementById("frontmatter-input") as HTMLTextAreaElement | null;
+  const editorRoot = document.getElementById("editor");
+
+  function markUserInitiatedChange(): void {
+    hasPendingUserChange = true;
+  }
+
+  function serializeCurrentDocument(bodyMarkdown: string): string {
+    const serializedMarkdown = normalizeMarkdownForStorage(
+      combineMarkdownDocument(currentFrontmatter, bodyMarkdown),
+      currentEol,
+      hasTrailingNewline,
+    );
+    return preserveExistingMarkdownSyntax(sourceMarkdown, serializedMarkdown);
+  }
 
   function cancelDocumentSync(): void {
     if (!debounceTimer) {
@@ -685,13 +926,17 @@ function buildToolbar(crepe: Crepe): void {
         return;
       }
 
+      if (!hasPendingUserChange) {
+        return;
+      }
+
       currentVersion++;
+      hasPendingUserChange = false;
+      const serializedMarkdown = serializeCurrentDocument(currentBodyMarkdown);
+
       vscode.postMessage({
         type: "edit",
-        markdown: combineMarkdownDocument(
-          currentFrontmatter,
-          normalizeListSpacing(currentBodyMarkdown),
-        ),
+        markdown: serializedMarkdown,
         version: currentVersion,
       });
     }, delay);
@@ -704,6 +949,9 @@ function buildToolbar(crepe: Crepe): void {
   const crepe = new Crepe({
     root: document.getElementById("editor")!,
     defaultValue: "",
+    features: {
+      [Crepe.Feature.ImageBlock]: false,
+    },
     featureConfigs: {
       [Crepe.Feature.CodeMirror]: {
         renderPreview: mermaidRenderPreview,
@@ -719,18 +967,34 @@ function buildToolbar(crepe: Crepe): void {
   // Toolbar: build and wire buttons
   // -------------------------------------------------------------------
 
-  buildToolbar(crepe);
+  buildToolbar(crepe, markUserInitiatedChange);
 
   // Initialise the search bar
   initSearchBar();
 
   if (frontmatterInput) {
     frontmatterInput.addEventListener("input", () => {
+      markUserInitiatedChange();
       currentFrontmatter = frontmatterInput.value;
       autoSizeFrontmatterInput(frontmatterInput);
       scheduleDocumentSync();
     });
   }
+
+  editorRoot?.addEventListener("beforeinput", () => {
+    markUserInitiatedChange();
+  }, true);
+  editorRoot?.addEventListener("keydown", (event) => {
+    if (isPotentialEditingKey(event)) {
+      markUserInitiatedChange();
+    }
+  }, true);
+  editorRoot?.addEventListener("paste", () => {
+    markUserInitiatedChange();
+  }, true);
+  editorRoot?.addEventListener("drop", () => {
+    markUserInitiatedChange();
+  }, true);
 
   window.addEventListener("blur", cancelDocumentSync);
   document.addEventListener("visibilitychange", () => {
@@ -770,6 +1034,10 @@ function buildToolbar(crepe: Crepe): void {
     if ((type === "init" || type === "update") && typeof markdown === "string" && version > currentVersion) {
       cancelDocumentSync();
       currentVersion = version;
+      hasPendingUserChange = false;
+      currentEol = detectLineEnding(markdown);
+      hasTrailingNewline = markdown.endsWith("\n");
+      sourceMarkdown = normalizeMarkdownForStorage(markdown, currentEol, hasTrailingNewline);
 
       // On init, apply all bundled settings before loading content so
       // mermaid diagrams render with the correct theme on the first pass.
@@ -789,6 +1057,14 @@ function buildToolbar(crepe: Crepe): void {
       currentFrontmatter = parsedDocument.frontmatter;
       currentBodyMarkdown = parsedDocument.body;
       renderFrontmatterPanel(currentFrontmatter);
+
+      crepe.editor.action((ctx) => {
+        const detectedOptions = detectSerializerOptions(markdown);
+        ctx.update(remarkStringifyOptionsCtx, (options) => ({
+          ...options,
+          ...detectedOptions,
+        }));
+      });
 
       suppressOnChange = true;
       crepe.editor.action(replaceAll(currentBodyMarkdown));

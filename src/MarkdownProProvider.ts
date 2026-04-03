@@ -206,7 +206,6 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
     let pendingEdits = 0;
     let currentVersion = 0;
     let lastSentContent = document.getText();
-
     /** Helper: post the current document text to the webview. */
     function sendToWebview(type: 'init' | 'update'): void {
       const markdown = document.getText();
