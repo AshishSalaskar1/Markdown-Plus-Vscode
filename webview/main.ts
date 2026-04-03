@@ -13,6 +13,7 @@ import {
   toggleEmphasisCommand,
   toggleInlineCodeCommand,
   listItemSchema,
+  bulletListSchema,
   wrapInHeadingCommand,
   wrapInBlockquoteCommand,
   wrapInBulletListCommand,
@@ -348,52 +349,127 @@ function restoreListMarkers(sourceMarkdown: string, markdown: string): string {
   return normalizedLines.join(eol);
 }
 
+interface TableBlock {
+  startIndex: number;
+  endIndex: number;
+  text: string;
+  cells: string[][];
+}
+
+function extractTableBlocks(markdown: string): TableBlock[] {
+  const lines = markdown.split(/\r?\n/);
+  const tables: TableBlock[] = [];
+  let tableStart = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const isTableLine = line.trimStart().startsWith("|") || /^\s*[-:|][-:|  ]+$/.test(line);
+
+    if (isTableLine && tableStart === -1) {
+      tableStart = i;
+    } else if (!isTableLine && tableStart !== -1) {
+      const tableLines = lines.slice(tableStart, i);
+      const cells = parseTableCells(tableLines);
+      if (cells.length > 0) {
+        tables.push({
+          startIndex: tableStart,
+          endIndex: i - 1,
+          text: tableLines.join("\n"),
+          cells,
+        });
+      }
+      tableStart = -1;
+    }
+  }
+
+  if (tableStart !== -1) {
+    const tableLines = lines.slice(tableStart);
+    const cells = parseTableCells(tableLines);
+    if (cells.length > 0) {
+      tables.push({
+        startIndex: tableStart,
+        endIndex: lines.length - 1,
+        text: tableLines.join("\n"),
+        cells,
+      });
+    }
+  }
+
+  return tables;
+}
+
+function parseTableCells(tableLines: string[]): string[][] {
+  const result: string[][] = [];
+  for (const line of tableLines) {
+    const trimmed = line.trim();
+    // Skip separator rows like |---|---|
+    if (/^[|:\-\s]+$/.test(trimmed)) continue;
+    if (!trimmed.startsWith("|")) continue;
+    const cells = trimmed
+      .replace(/^\|/, "")
+      .replace(/\|$/, "")
+      .split("|")
+      .map((c) => c.trim());
+    result.push(cells);
+  }
+  return result;
+}
+
+function normalizeTableCell(cell: string): string {
+  return cell.replace(/<br\s*\/?>/gi, "").replace(/\s+/g, " ").trim();
+}
+
+function tableContentsMatch(a: string[][], b: string[][]): boolean {
+  if (a.length !== b.length) return false;
+  for (let r = 0; r < a.length; r++) {
+    if (a[r].length !== b[r].length) return false;
+    for (let c = 0; c < a[r].length; c++) {
+      if (normalizeTableCell(a[r][c]) !== normalizeTableCell(b[r][c])) return false;
+    }
+  }
+  return true;
+}
+
+function restoreTables(sourceMarkdown: string, markdown: string): string {
+  const sourceTables = extractTableBlocks(sourceMarkdown);
+  if (sourceTables.length === 0) return markdown;
+
+  const outputTables = extractTableBlocks(markdown);
+  if (outputTables.length === 0) return markdown;
+
+  const eol = markdown.includes("\r\n") ? "\r\n" : "\n";
+  const lines = markdown.split(/\r?\n/);
+  const usedSourceIndices = new Set<number>();
+
+  // Process tables in reverse order so line index replacements don't shift
+  for (let oi = outputTables.length - 1; oi >= 0; oi--) {
+    const outputTable = outputTables[oi];
+    // Find matching source table by cell content
+    for (let si = 0; si < sourceTables.length; si++) {
+      if (usedSourceIndices.has(si)) continue;
+      if (tableContentsMatch(sourceTables[si].cells, outputTable.cells)) {
+        // Replace the serialized table with the original source table
+        const sourceLines = sourceTables[si].text.split(/\r?\n/);
+        lines.splice(outputTable.startIndex, outputTable.endIndex - outputTable.startIndex + 1, ...sourceLines);
+        usedSourceIndices.add(si);
+        break;
+      }
+    }
+  }
+
+  return lines.join(eol);
+}
+
 function preserveExistingMarkdownSyntax(sourceMarkdown: string, markdown: string): string {
-  return restoreListMarkers(
+  return restoreTables(
     sourceMarkdown,
-    restoreCalloutMarkers(sourceMarkdown, markdown),
+    restoreListMarkers(
+      sourceMarkdown,
+      restoreCalloutMarkers(sourceMarkdown, markdown),
+    ),
   );
 }
 
-function detectSerializerOptions(markdown: string): Partial<{
-  bullet: "-" | "+" | "*";
-  bulletOther: "-" | "+" | "*";
-  bulletOrdered: "." | ")";
-  emphasis: "*" | "_";
-  strong: "*" | "_";
-}> {
-  const options: Partial<{
-    bullet: "-" | "+" | "*";
-    bulletOther: "-" | "+" | "*";
-    bulletOrdered: "." | ")";
-    emphasis: "*" | "_";
-    strong: "*" | "_";
-  }> = {};
-
-  const bulletMatch = markdown.match(/^\s*([-+*])\s+/m);
-  if (bulletMatch) {
-    const bullet = bulletMatch[1] as "-" | "+" | "*";
-    options.bullet = bullet;
-    options.bulletOther = bullet === "-" ? "*" : "-";
-  }
-
-  const orderedBulletMatch = markdown.match(/^\s*\d+([.)])\s+/m);
-  if (orderedBulletMatch) {
-    options.bulletOrdered = orderedBulletMatch[1] as "." | ")";
-  }
-
-  const strongMatch = markdown.match(/(^|[^\w\\])(\*\*|__)(?=\S)/m);
-  if (strongMatch) {
-    options.strong = strongMatch[2] === "__" ? "_" : "*";
-  }
-
-  const emphasisMatch = markdown.match(/(^|[^\w\\])(\*|_)(?=\S)(?!\2)/m);
-  if (emphasisMatch) {
-    options.emphasis = emphasisMatch[2] as "*" | "_";
-  }
-
-  return options;
-}
 
 function isPotentialEditingKey(event: KeyboardEvent): boolean {
   if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
@@ -450,11 +526,47 @@ const tightListItemSchema = listItemSchema.extendSchema((prev) => {
         runner: (state, node, type) => {
           const label = node.label != null ? `${node.label}.` : "•";
           const listType = node.label != null ? "ordered" : "bullet";
-          const spread = node.spread != null ? `${node.spread}` : "false";
+          const spread = node.spread === true;
 
           state.openNode(type, { label, listType, spread });
           state.next(node.children);
           state.closeNode();
+        },
+      },
+      toMarkdown: {
+        ...baseSchema.toMarkdown,
+        runner: (state: any, node: any) => {
+          state.openNode("listItem", undefined, {
+            spread: node.attrs.spread === true,
+          });
+          state.next(node.content);
+          state.closeNode();
+        },
+      },
+    };
+  };
+});
+
+const fixedBulletListSchema = bulletListSchema.extendSchema((prev) => {
+  return (ctx) => {
+    const baseSchema = prev(ctx);
+
+    return {
+      ...baseSchema,
+      parseMarkdown: {
+        ...baseSchema.parseMarkdown,
+        runner: (state: any, node: any, type: any) => {
+          const spread = node.spread === true;
+          state.openNode(type, { spread }).next(node.children).closeNode();
+        },
+      },
+      toMarkdown: {
+        ...baseSchema.toMarkdown,
+        runner: (state: any, node: any) => {
+          state.openNode("list", undefined, {
+            ordered: false,
+            spread: node.attrs.spread === true,
+          }).next(node.content).closeNode();
         },
       },
     };
@@ -960,6 +1072,27 @@ function buildToolbar(crepe: Crepe, onBeforeAction: () => void): void {
   });
 
   crepe.editor.use(tightListItemSchema);
+  crepe.editor.use(fixedBulletListSchema);
+
+  // Configure remark-stringify with CommonMark/markdownlint recommended defaults.
+  // These apply to NEW content created by the user; existing content is preserved
+  // by the post-processing in preserveExistingMarkdownSyntax().
+  crepe.editor.config((ctx) => {
+    ctx.update(remarkStringifyOptionsCtx, (prev) => ({
+      ...prev,
+      bullet: "-" as const,        // MD004: dash for unordered lists
+      bulletOther: "*" as const,    // fallback for nested disambiguation
+      bulletOrdered: "." as const,  // MD029: dot for ordered lists
+      emphasis: "*" as const,       // MD049: asterisk for emphasis
+      strong: "*" as const,         // MD050: asterisk for strong
+      rule: "-" as const,           // MD035: dashes for horizontal rules (---)
+      fence: "`" as const,          // backtick for code fences
+      fences: true,                 // MD046: fenced code blocks (not indented)
+      setext: false,                // ATX headings (# style, not underline)
+      incrementListMarker: true,    // 1. 2. 3. (not 1. 1. 1.)
+      listItemIndent: "one" as const, // one space after list marker
+    }));
+  });
 
   await crepe.create();
 
@@ -1057,14 +1190,6 @@ function buildToolbar(crepe: Crepe, onBeforeAction: () => void): void {
       currentFrontmatter = parsedDocument.frontmatter;
       currentBodyMarkdown = parsedDocument.body;
       renderFrontmatterPanel(currentFrontmatter);
-
-      crepe.editor.action((ctx) => {
-        const detectedOptions = detectSerializerOptions(markdown);
-        ctx.update(remarkStringifyOptionsCtx, (options) => ({
-          ...options,
-          ...detectedOptions,
-        }));
-      });
 
       suppressOnChange = true;
       crepe.editor.action(replaceAll(currentBodyMarkdown));
