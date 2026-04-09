@@ -91,10 +91,14 @@ function applyFontFamily(fontFamily: string): void {
  * Apply a custom content width (max-width) for the editor and toolbar.
  */
 function applyContentWidth(contentWidth: number): void {
-  document.documentElement.style.setProperty(
-    "--mdpro-content-width",
-    `${contentWidth}px`,
-  );
+  if (contentWidth > 0) {
+    document.documentElement.style.setProperty(
+      "--mdpro-content-width",
+      `${contentWidth}px`,
+    );
+  } else {
+    document.documentElement.style.removeProperty("--mdpro-content-width");
+  }
 }
 
 /**

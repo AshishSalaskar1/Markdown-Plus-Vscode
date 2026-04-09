@@ -66,7 +66,7 @@ export function broadcastFontFamily(
 export function getActiveContentWidth(): number {
   return vscode.workspace
     .getConfiguration('markdownPro')
-    .get<number>('contentWidth', 900);
+    .get<number>('contentWidth', 0);
 }
 
 /** Send a content-width change message to all open webview panels. */

@@ -2,7 +2,7 @@
   "name": "markdown-pro",
   "displayName": "Markdown Pro",
   "description": "WYSIWYG markdown editor for VS Code",
-  "version": "0.7.7",
+  "version": "0.7.8",
   "publisher": "ashishsalaskar",
   "icon": "Markdown_Plus_Logo_v2.png",
   "license": "MIT",
@@ -245,10 +245,10 @@
         },
         "markdownPro.contentWidth": {
           "type": "number",
-          "default": 900,
-          "minimum": 400,
+          "default": 0,
+          "minimum": 0,
           "maximum": 1600,
-          "markdownDescription": "Maximum content width (in pixels) for the Markdown Pro editor. Use `900` for comfortable reading or `1200`+ for wide screens."
+          "markdownDescription": "Maximum content width (in pixels) for the Markdown Pro editor. Use `0` for full width (like the built-in VS Code markdown preview), or set a value like `900` for comfortable reading."
         },
         "markdownPro.showToolbar": {
           "type": "boolean",
