@@ -56,7 +56,7 @@ body {
   background: var(--vscode-editor-background);
   color: var(--vscode-editor-foreground);
   font-family: var(--mdpro-font-family, var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif));
-  font-size: var(--mdpro-font-size, 16px);
+  font-size: var(--mdpro-font-size, 14px);
   line-height: var(--mdpro-line-height, 1.6);
 }
 
@@ -408,7 +408,7 @@ body {
    --------------------------------------------------------- */
 
 .milkdown .ProseMirror {
-  padding: 16px 26px !important;
+  padding: 4px 26px !important;
   outline: none;
   min-height: 100px;
   caret-color: var(--vscode-editorCursor-foreground, var(--vscode-editor-foreground));
@@ -504,7 +504,7 @@ body {
 
 .milkdown .ProseMirror h1 {
   font-size: 2em !important;
-  margin-top: 24px !important;
+  margin-top: 0 !important;
   margin-bottom: 16px !important;
   padding-bottom: 0.3em !important;
   border-bottom: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.2));
@@ -551,7 +551,7 @@ body {
   font-size: inherit !important;
   line-height: var(--mdpro-line-height, 1.6) !important;
   padding: 0 !important;
-  margin: 0 0 16px 0 !important;
+  margin: 0 0 10px 0 !important;
 }
 
 /* ---------------------------------------------------------
@@ -656,20 +656,25 @@ body {
 
 .milkdown table {
   border-collapse: collapse;
-  width: 100%;
+  width: auto !important;
+  table-layout: auto !important;
   margin: 0 0 16px 0;
 }
 
 .milkdown th,
 .milkdown td {
   border: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.3));
-  padding: 6px 12px;
+  padding: 4px 8px !important;
   text-align: left;
 }
 
 .milkdown th {
   background: var(--vscode-textCodeBlock-background);
   font-weight: 600;
+}
+
+.milkdown .milkdown-table-block {
+  margin: 0 0 16px 0 !important;
 }
 
 /* ---------------------------------------------------------
@@ -679,7 +684,7 @@ body {
 .milkdown .ProseMirror ul,
 .milkdown .ProseMirror ol {
   padding-left: 2em !important;
-  margin: 0 0 16px 0 !important;
+  margin: 0 0 10px 0 !important;
 }
 
 .milkdown .ProseMirror li {
@@ -704,7 +709,7 @@ body {
 }
 
 .milkdown .milkdown-list-item-block li {
-  gap: 4px !important;
+  gap: 2px !important;
 }
 
 .milkdown .milkdown-list-item-block li .label-wrapper {

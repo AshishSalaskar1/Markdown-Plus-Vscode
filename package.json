@@ -2,7 +2,7 @@
   "name": "markdown-pro",
   "displayName": "Markdown Pro",
   "description": "WYSIWYG markdown editor for VS Code",
-  "version": "0.7.8",
+  "version": "0.8.0",
   "publisher": "ashishsalaskar",
   "icon": "Markdown_Plus_Logo_v2.png",
   "license": "MIT",
@@ -214,7 +214,7 @@
         },
         "markdownPro.fontSize": {
           "type": "number",
-          "default": 16,
+          "default": 14,
           "minimum": 8,
           "maximum": 40,
           "markdownDescription": "Font size (in pixels) for the Markdown Pro editor. Use the commands `Markdown Pro: Increase Font Size` / `Decrease Font Size` for quick adjustments."
