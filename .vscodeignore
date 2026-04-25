@@ -2,6 +2,8 @@
 .copilot-tracking/**
 .github/**
 .git/**
+.temp/**
+graphify-out/**
 src/**
 webview/**
 node_modules/**
@@ -14,3 +16,4 @@ tsconfig.webview.json
 CONTRIBUTING.md
 package-lock.json
 requirements.md
+test.md

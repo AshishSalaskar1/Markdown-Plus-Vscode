@@ -58,6 +58,14 @@ body {
   font-family: var(--mdpro-font-family, var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif));
   font-size: var(--mdpro-font-size, 14px);
   line-height: var(--mdpro-line-height, 1.6);
+  --mdpro-shell-padding-x: 24px;
+  --mdpro-shell-padding-y: 4px;
+  --mdpro-block-gap: 8px;
+  --mdpro-block-gap-lg: 12px;
+  --mdpro-heading-gap: 18px;
+  --mdpro-heading-gap-tight: 10px;
+  --mdpro-table-cell-padding-y: 2px;
+  --mdpro-table-cell-padding-x: 6px;
 }
 
 /* ---------------------------------------------------------
@@ -67,16 +75,16 @@ body {
 #editor {
   max-width: var(--mdpro-content-width, none);
   margin: 0 auto;
-  padding: 0 26px;
+  padding: 0;
   box-sizing: border-box;
 }
 
 #frontmatter-panel {
   max-width: var(--mdpro-content-width, none);
-  margin: 16px auto 18px;
-  padding: 14px 16px 16px;
+  margin: 10px auto 12px;
+  padding: 10px 12px 12px;
   border: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.2));
-  border-radius: 12px;
+  border-radius: 8px;
   background: color-mix(in srgb, var(--vscode-editor-background) 88%, var(--vscode-textCodeBlock-background) 12%);
   box-sizing: border-box;
 }
@@ -90,7 +98,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .frontmatter-panel-title {
@@ -110,14 +118,14 @@ body {
   display: block;
   width: 100%;
   min-height: 96px;
-  padding: 12px 14px;
+  padding: 8px 10px;
   border: 1px solid var(--vscode-input-border, rgba(128,128,128,.3));
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--vscode-textCodeBlock-background, rgba(128,128,128,.08));
   color: var(--vscode-editor-foreground);
   font-family: var(--vscode-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", monospace);
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.5;
   box-sizing: border-box;
   resize: vertical;
   overflow: hidden;
@@ -247,11 +255,11 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 12px;
+  padding: var(--mdpro-shell-padding-y) 8px;
   max-width: var(--mdpro-content-width, none);
   margin: 0 auto;
-  padding-left: 26px;
-  padding-right: 26px;
+  padding-left: var(--mdpro-shell-padding-x);
+  padding-right: var(--mdpro-shell-padding-x);
   box-sizing: border-box;
   background: color-mix(in srgb, var(--vscode-editor-background) 80%, transparent);
   backdrop-filter: blur(12px);
@@ -264,9 +272,9 @@ body {
 
 #toolbar .toolbar-separator {
   width: 1px;
-  height: 24px;
+  height: 20px;
   background: var(--vscode-editorWidget-border, rgba(128,128,128,.2));
-  margin: 0 6px;
+  margin: 0 4px;
   flex-shrink: 0;
 }
 
@@ -274,11 +282,11 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border: none;
-  border-radius: 5px;
+  border-radius: 4px;
   background: transparent;
   color: var(--vscode-editor-foreground);
   cursor: pointer;
@@ -301,8 +309,8 @@ body {
 }
 
 #toolbar button svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -366,7 +374,7 @@ body {
   background: var(--vscode-editorHoverWidget-background, #252526);
   border: 1px solid var(--vscode-editorHoverWidget-border, #454545);
   border-radius: 6px;
-  padding: 4px;
+  padding: 3px;
   box-shadow: 0 4px 12px rgba(0,0,0,.25);
   z-index: 300;
   min-width: 130px;
@@ -408,7 +416,7 @@ body {
    --------------------------------------------------------- */
 
 .milkdown .ProseMirror {
-  padding: 4px 26px !important;
+  padding: 2px var(--mdpro-shell-padding-x) var(--mdpro-block-gap-lg) !important;
   outline: none;
   min-height: 100px;
   caret-color: var(--vscode-editorCursor-foreground, var(--vscode-editor-foreground));
@@ -505,41 +513,41 @@ body {
 .milkdown .ProseMirror h1 {
   font-size: 2em !important;
   margin-top: 0 !important;
-  margin-bottom: 16px !important;
+  margin-bottom: var(--mdpro-block-gap-lg) !important;
   padding-bottom: 0.3em !important;
   border-bottom: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.2));
 }
 
 .milkdown .ProseMirror h2 {
   font-size: 1.5em !important;
-  margin-top: 24px !important;
-  margin-bottom: 16px !important;
+  margin-top: 20px !important;
+  margin-bottom: var(--mdpro-block-gap-lg) !important;
   padding-bottom: 0.3em !important;
   border-bottom: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.2));
 }
 
 .milkdown .ProseMirror h3 {
   font-size: 1.25em !important;
-  margin-top: 24px !important;
-  margin-bottom: 16px !important;
+  margin-top: var(--mdpro-heading-gap) !important;
+  margin-bottom: var(--mdpro-heading-gap-tight) !important;
 }
 
 .milkdown .ProseMirror h4 {
   font-size: 1em !important;
-  margin-top: 24px !important;
-  margin-bottom: 16px !important;
+  margin-top: var(--mdpro-heading-gap) !important;
+  margin-bottom: var(--mdpro-heading-gap-tight) !important;
 }
 
 .milkdown .ProseMirror h5 {
   font-size: 0.875em !important;
-  margin-top: 24px !important;
-  margin-bottom: 16px !important;
+  margin-top: var(--mdpro-heading-gap) !important;
+  margin-bottom: var(--mdpro-heading-gap-tight) !important;
 }
 
 .milkdown .ProseMirror h6 {
   font-size: 0.85em !important;
-  margin-top: 24px !important;
-  margin-bottom: 16px !important;
+  margin-top: var(--mdpro-heading-gap) !important;
+  margin-bottom: var(--mdpro-heading-gap-tight) !important;
   color: var(--vscode-descriptionForeground, var(--vscode-editor-foreground));
 }
 
@@ -551,7 +559,7 @@ body {
   font-size: inherit !important;
   line-height: var(--mdpro-line-height, 1.6) !important;
   padding: 0 !important;
-  margin: 0 0 10px 0 !important;
+  margin: 0 0 var(--mdpro-block-gap) 0 !important;
 }
 
 /* ---------------------------------------------------------
@@ -577,7 +585,7 @@ body {
   background: var(--vscode-textCodeBlock-background) !important;
   font-family: var(--vscode-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", monospace) !important;
   font-size: 85% !important;
-  padding: 0.2em 0.4em !important;
+  padding: 0.1em 0.35em !important;
   border-radius: 3px !important;
   display: inline-block !important;
   line-height: 1.4286 !important;
@@ -591,8 +599,8 @@ body {
 .milkdown .milkdown-code-block {
   background: var(--vscode-textCodeBlock-background) !important;
   border-radius: 4px !important;
-  padding: 8px 16px 16px !important;
-  margin: 0 0 16px 0 !important;
+  padding: 6px 12px 10px !important;
+  margin: 0 0 var(--mdpro-block-gap-lg) 0 !important;
 }
 
 .milkdown .milkdown-code-block .cm-editor {
@@ -620,10 +628,10 @@ body {
 
 .milkdown .ProseMirror pre {
   background: var(--vscode-textCodeBlock-background) !important;
-  padding: 16px !important;
+  padding: 10px 12px !important;
   border-radius: 4px !important;
   overflow-x: auto;
-  margin: 0 0 16px 0 !important;
+  margin: 0 0 var(--mdpro-block-gap-lg) 0 !important;
 }
 
 .milkdown .ProseMirror pre code {
@@ -639,9 +647,9 @@ body {
 
 .milkdown .ProseMirror blockquote {
   background: var(--vscode-textBlockQuote-background) !important;
-  padding: 0 16px !important;
-  padding-left: 16px !important;
-  margin: 0 0 16px 0 !important;
+  padding: 0 12px !important;
+  padding-left: 12px !important;
+  margin: 0 0 var(--mdpro-block-gap-lg) 0 !important;
 }
 
 .milkdown .ProseMirror blockquote::before {
@@ -658,14 +666,21 @@ body {
   border-collapse: collapse;
   width: auto !important;
   table-layout: auto !important;
-  margin: 0 0 16px 0;
+  margin: 0 0 10px 0;
 }
 
 .milkdown th,
 .milkdown td {
   border: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.3));
-  padding: 4px 8px !important;
+  padding: var(--mdpro-table-cell-padding-y) var(--mdpro-table-cell-padding-x) !important;
   text-align: left;
+  line-height: 1.4;
+  vertical-align: top;
+}
+
+.milkdown .milkdown-table-block th,
+.milkdown .milkdown-table-block td {
+  padding: var(--mdpro-table-cell-padding-y) var(--mdpro-table-cell-padding-x) !important;
 }
 
 .milkdown th {
@@ -673,8 +688,52 @@ body {
   font-weight: 600;
 }
 
+.milkdown th > p,
+.milkdown td > p {
+  margin: 0 !important;
+}
+
 .milkdown .milkdown-table-block {
-  margin: 0 0 16px 0 !important;
+  margin: 0 0 10px 0 !important;
+}
+
+.milkdown .milkdown-table-block .cell-handle[data-role='col-drag-handle'] {
+  padding: 0 4px;
+  width: 22px;
+  height: 12px;
+}
+
+.milkdown .milkdown-table-block .cell-handle[data-role='row-drag-handle'] {
+  padding: 4px 0;
+  width: 12px;
+  height: 22px;
+}
+
+.milkdown .milkdown-table-block .cell-handle .button-group {
+  top: -40px;
+  border-radius: 6px;
+}
+
+.milkdown .milkdown-table-block .cell-handle .button-group button {
+  margin: 4px;
+  padding: 2px;
+}
+
+.milkdown .milkdown-table-block .cell-handle .button-group button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.milkdown .milkdown-table-block .line-handle[data-role='x-line-drag-handle'] .add-button {
+  padding: 4px 0;
+  width: 12px;
+  height: 22px;
+}
+
+.milkdown .milkdown-table-block .line-handle[data-role='y-line-drag-handle'] .add-button {
+  padding: 0 4px;
+  width: 22px;
+  height: 12px;
 }
 
 /* ---------------------------------------------------------
@@ -684,7 +743,7 @@ body {
 .milkdown .ProseMirror ul,
 .milkdown .ProseMirror ol {
   padding-left: 2em !important;
-  margin: 0 0 10px 0 !important;
+  margin: 0 0 var(--mdpro-block-gap) 0 !important;
 }
 
 .milkdown .ProseMirror li {
@@ -698,7 +757,7 @@ body {
 
 .milkdown .ProseMirror li > ul,
 .milkdown .ProseMirror li > ol {
-  margin: 4px 0 0 0 !important;
+  margin: 2px 0 0 0 !important;
 }
 
 /* Crepe list-item-block wrapper overrides — eliminate extra height */
@@ -741,7 +800,7 @@ body {
   height: auto !important;
   padding: 0 !important;
   border-top: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.3)) !important;
-  margin: 24px 0 !important;
+  margin: 16px 0 !important;
 }
 
 /* ---------------------------------------------------------
@@ -812,7 +871,7 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 8px;
+  padding: 3px 6px;
   border-bottom: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.15));
   background: color-mix(in srgb, var(--vscode-editor-background) 60%, transparent);
   user-select: none;
@@ -823,8 +882,8 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   border: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.2));
   border-radius: 4px;
@@ -859,7 +918,7 @@ body {
 .mermaid-canvas {
   overflow: hidden;
   position: relative;
-  min-height: 100px;
+  min-height: 72px;
   cursor: grab;
 }
 
@@ -872,7 +931,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 16px;
+  padding: 10px;
   will-change: transform;
 }
 

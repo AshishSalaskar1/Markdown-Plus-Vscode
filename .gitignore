@@ -25,3 +25,7 @@ npm-debug.log*
 #hve-core files
 .copilot-tracking/
 .github
+
+# temp files
+.temp/
+graphify-out/
