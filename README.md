@@ -188,6 +188,22 @@ Adjust the editor font size with these commands (available in the Command Palett
 
 You can also set the size directly in VS Code Settings under `markdownPro.fontSize` (range: 8–40 px).
 
+## Development Setup
+
+Install dependencies, build the extension, package it, and install the newest generated VSIX into VS Code:
+
+```bash
+npm install
+npm run build
+npm run package && code --install-extension "$(ls -1v ./*.vsix | tail -n 1)" --force
+```
+
+To publish a new Marketplace release, use the same packaging tool directly:
+
+```bash
+npx @vscode/vsce publish
+```
+
 ## Requirements
 
 * Visual Studio Code v1.85.0 or later
