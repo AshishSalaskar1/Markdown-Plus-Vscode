@@ -4,6 +4,8 @@ A WYSIWYG markdown editor for Visual Studio Code. Edit markdown files in a live,
 
 [Vscode Extension Link](https://marketplace.visualstudio.com/items?itemName=AshishSalaskar.markdown-pro)
 
+![Markdown Pro demo](resources/markdown-plus-demo.gif)
+
 ## Features
 
 * **Live WYSIWYG editing** of `.md` and `.markdown` files directly inside VS Code.
