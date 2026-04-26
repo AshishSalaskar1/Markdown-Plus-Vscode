@@ -2,7 +2,7 @@
   "name": "markdown-pro",
   "displayName": "Markdown Pro",
   "description": "WYSIWYG markdown editor for VS Code",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "publisher": "ashishsalaskar",
   "icon": "Markdown_Plus_Logo_v2.png",
   "license": "MIT",
@@ -17,11 +17,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/ashish/markdown-plus"
+    "url": "https://github.com/AshishSalaskar1/Markdown-Plus-Vscode"
   },
-  "homepage": "https://github.com/ashish/markdown-plus#readme",
+  "homepage": "https://github.com/AshishSalaskar1/Markdown-Plus-Vscode#readme",
   "bugs": {
-    "url": "https://github.com/ashish/markdown-plus/issues"
+    "url": "https://github.com/AshishSalaskar1/Markdown-Plus-Vscode/issues"
   },
   "engines": {
     "vscode": "^1.85.0"
