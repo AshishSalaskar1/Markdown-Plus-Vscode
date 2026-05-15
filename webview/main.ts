@@ -197,7 +197,7 @@ function normalizeMarkdownForStorage(
 
 function restoreCalloutMarkers(sourceMarkdown: string, markdown: string): string {
   const sourceMarkers = new Set(
-    [...sourceMarkdown.matchAll(/(?<!\\)\[![A-Z][A-Z0-9_-]*\]/g)].map((match) => match[0]),
+    [...sourceMarkdown.matchAll(/(?<!\\)\[![A-Za-z][A-Za-z0-9_-]*\]/g)].map((match) => match[0]),
   );
 
   let restored = markdown;
@@ -434,6 +434,19 @@ function tableContentsMatch(a: string[][], b: string[][]): boolean {
   return true;
 }
 
+/** Flatten all cell text into a single normalized string for fuzzy comparison. */
+function flattenTableText(cells: string[][]): string {
+  return cells.map((row) => row.map(normalizeTableCell).join(" ")).join(" ");
+}
+
+/**
+ * Looser table match: compares flattened, normalized text of all cells.
+ * Handles cases where Milkdown changes row/cell structure but keeps content.
+ */
+function tableContentsFuzzyMatch(a: string[][], b: string[][]): boolean {
+  return flattenTableText(a) === flattenTableText(b);
+}
+
 function restoreTables(sourceMarkdown: string, markdown: string): string {
   const sourceTables = extractTableBlocks(sourceMarkdown);
   if (sourceTables.length === 0) return markdown;
@@ -448,30 +461,128 @@ function restoreTables(sourceMarkdown: string, markdown: string): string {
   // Process tables in reverse order so line index replacements don't shift
   for (let oi = outputTables.length - 1; oi >= 0; oi--) {
     const outputTable = outputTables[oi];
-    // Find matching source table by cell content
+    let matched = false;
+
+    // Pass 1: strict cell-grid matching
     for (let si = 0; si < sourceTables.length; si++) {
       if (usedSourceIndices.has(si)) continue;
       if (tableContentsMatch(sourceTables[si].cells, outputTable.cells)) {
-        // Replace the serialized table with the original source table
         const sourceLines = sourceTables[si].text.split(/\r?\n/);
         lines.splice(outputTable.startIndex, outputTable.endIndex - outputTable.startIndex + 1, ...sourceLines);
         usedSourceIndices.add(si);
+        matched = true;
         break;
       }
+    }
+
+    // Pass 2: fuzzy matching (flattened text) — handles row/cell restructuring
+    if (!matched) {
+      for (let si = 0; si < sourceTables.length; si++) {
+        if (usedSourceIndices.has(si)) continue;
+        if (tableContentsFuzzyMatch(sourceTables[si].cells, outputTable.cells)) {
+          const sourceLines = sourceTables[si].text.split(/\r?\n/);
+          lines.splice(outputTable.startIndex, outputTable.endIndex - outputTable.startIndex + 1, ...sourceLines);
+          usedSourceIndices.add(si);
+          matched = true;
+          break;
+        }
+      }
+    }
+
+    // Pass 3: position-based fallback — match Nth output table to Nth source table
+    if (!matched && oi < sourceTables.length && !usedSourceIndices.has(oi)) {
+      const sourceLines = sourceTables[oi].text.split(/\r?\n/);
+      lines.splice(outputTable.startIndex, outputTable.endIndex - outputTable.startIndex + 1, ...sourceLines);
+      usedSourceIndices.add(oi);
     }
   }
 
   return lines.join(eol);
 }
 
+/**
+ * Detect the `<br>` tag style used in the source and normalize the
+ * serialized output to match. Milkdown may normalize all variants to one form.
+ */
+function restoreBrTagStyle(sourceMarkdown: string, markdown: string): string {
+  // Find the dominant <br> style in the source
+  const brVariants = sourceMarkdown.match(/<br\s*\/?>/gi);
+  if (!brVariants || brVariants.length === 0) return markdown;
+
+  // Count occurrences of each style
+  const counts = new Map<string, number>();
+  for (const tag of brVariants) {
+    const key = tag.toLowerCase();
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  // Pick the most common style
+  let dominant = brVariants[0];
+  let maxCount = 0;
+  for (const [tag, count] of counts) {
+    if (count > maxCount) {
+      maxCount = count;
+      // Use the original casing from the source
+      dominant = brVariants.find((v) => v.toLowerCase() === tag) ?? tag;
+    }
+  }
+
+  // Replace all <br> variants in serialized output with the source style
+  return markdown.replace(/<br\s*\/?>/gi, dominant);
+}
+
 function preserveExistingMarkdownSyntax(sourceMarkdown: string, markdown: string): string {
-  return restoreTables(
+  return restoreBrTagStyle(
     sourceMarkdown,
-    restoreListMarkers(
+    restoreTables(
       sourceMarkdown,
-      restoreCalloutMarkers(sourceMarkdown, markdown),
+      restoreListMarkers(
+        sourceMarkdown,
+        restoreCalloutMarkers(sourceMarkdown, markdown),
+      ),
     ),
   );
+}
+
+/**
+ * Detect the emphasis, strong, horizontal-rule, and fence formatting styles
+ * used in the source markdown so the serializer can match them instead of
+ * normalizing everything to the hard-coded defaults.
+ */
+function detectFormattingPreferences(markdown: string): {
+  emphasis: "*" | "_";
+  strong: "*" | "_";
+  rule: "-" | "*" | "_";
+  fence: "`" | "~";
+} {
+  // Strip fenced code blocks and inline code to reduce false positives
+  const noCode = markdown
+    .replace(/^(`{3,})[^\n]*\n[\s\S]*?\n\1\s*$/gm, "")
+    .replace(/^(~{3,})[^\n]*\n[\s\S]*?\n\1\s*$/gm, "")
+    .replace(/`[^`\n]+`/g, "");
+
+  // Emphasis: count opening markers for _em_ vs *em*
+  // Preceded by whitespace/start-of-line, followed by non-whitespace, not doubled
+  const underscoreEm = (noCode.match(/(^|[\s([])\s*_(?!\s|_)\S/gm) || []).length;
+  const asteriskEm = (noCode.match(/(^|[\s([])\s*\*(?!\s|\*)\S/gm) || []).length;
+
+  // Strong: count opening markers for __strong__ vs **strong**
+  const underscoreStrong = (noCode.match(/(^|[\s([])\s*__(?!\s|_)\S/gm) || []).length;
+  const asteriskStrong = (noCode.match(/(^|[\s([])\s*\*\*(?!\s|\*)\S/gm) || []).length;
+
+  // HR: detect the character used for the first horizontal rule
+  const hrMatch = noCode.match(/^\s*([-*_])\1{2,}\s*$/m);
+
+  // Fence: detect backtick vs tilde from original markdown (before stripping)
+  const hasTildeFence = /^~{3,}/m.test(markdown);
+  const hasBacktickFence = /^`{3,}/m.test(markdown);
+
+  return {
+    emphasis: underscoreEm > asteriskEm ? "_" : "*",
+    strong: underscoreStrong > asteriskStrong ? "_" : "*",
+    rule: (hrMatch?.[1] || "-") as "-" | "*" | "_",
+    fence: hasTildeFence && !hasBacktickFence ? "~" : "`",
+  };
 }
 
 
@@ -524,6 +635,9 @@ const tightListItemSchema = listItemSchema.extendSchema((prev) => {
           default: false,
           validate: "boolean",
         },
+        checked: {
+          default: null,
+        },
       },
       parseMarkdown: {
         ...baseSchema.parseMarkdown,
@@ -531,8 +645,9 @@ const tightListItemSchema = listItemSchema.extendSchema((prev) => {
           const label = node.label != null ? `${node.label}.` : "•";
           const listType = node.label != null ? "ordered" : "bullet";
           const spread = node.spread === true;
+          const checked = node.checked != null ? Boolean(node.checked) : null;
 
-          state.openNode(type, { label, listType, spread });
+          state.openNode(type, { label, listType, spread, checked });
           state.next(node.children);
           state.closeNode();
         },
@@ -540,9 +655,14 @@ const tightListItemSchema = listItemSchema.extendSchema((prev) => {
       toMarkdown: {
         ...baseSchema.toMarkdown,
         runner: (state: any, node: any) => {
-          state.openNode("listItem", undefined, {
+          const props: Record<string, unknown> = {
             spread: node.attrs.spread === true,
-          });
+          };
+          // Preserve checkbox state for GFM task list items
+          if (node.attrs.checked != null) {
+            props.checked = node.attrs.checked;
+          }
+          state.openNode("listItem", undefined, props);
           state.next(node.content);
           state.closeNode();
         },
@@ -1046,10 +1166,16 @@ function buildToolbar(crepe: Crepe, onBeforeAction: () => void): void {
         return;
       }
 
-      currentVersion++;
       hasPendingUserChange = false;
       const serializedMarkdown = serializeCurrentDocument(currentBodyMarkdown);
 
+      // Skip posting if the serialized output is identical to the source —
+      // this prevents silent modifications when no real edit was made.
+      if (serializedMarkdown === sourceMarkdown) {
+        return;
+      }
+
+      currentVersion++;
       vscode.postMessage({
         type: "edit",
         markdown: serializedMarkdown,
@@ -1197,7 +1323,10 @@ function buildToolbar(crepe: Crepe, onBeforeAction: () => void): void {
 
       suppressOnChange = true;
       crepe.editor.action(replaceAll(currentBodyMarkdown));
-      suppressOnChange = false;
+      // Defer clearing suppress to catch any async markdownUpdated events
+      // fired by Milkdown plugins/decorations after replaceAll completes.
+      hasPendingUserChange = false;
+      requestAnimationFrame(() => { suppressOnChange = false; });
     }
 
     if (type === "themeChange" && theme) {
