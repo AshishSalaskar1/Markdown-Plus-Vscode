@@ -1302,6 +1302,20 @@ function buildToolbar(crepe: Crepe, onBeforeAction: () => void): void {
       hasTrailingNewline = markdown.endsWith("\n");
       sourceMarkdown = normalizeMarkdownForStorage(markdown, currentEol, hasTrailingNewline);
 
+      // Detect the formatting style used in the source document and update
+      // remark-stringify options to match, so the serializer preserves the
+      // original emphasis/strong/rule/fence style instead of normalizing.
+      const formatting = detectFormattingPreferences(sourceMarkdown);
+      crepe.editor.action((ctx: any) => {
+        ctx.update(remarkStringifyOptionsCtx, (prev: any) => ({
+          ...prev,
+          emphasis: formatting.emphasis,
+          strong: formatting.strong,
+          rule: formatting.rule,
+          fence: formatting.fence,
+        }));
+      });
+
       // On init, apply all bundled settings before loading content so
       // mermaid diagrams render with the correct theme on the first pass.
       if (type === "init") {
