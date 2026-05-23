@@ -278,6 +278,19 @@ body {
   flex-shrink: 0;
 }
 
+#toolbar .toolbar-spacer {
+  flex: 1 1 auto;
+  min-width: 8px;
+}
+
+#toolbar button.toolbar-outline-btn {
+  width: auto;
+  padding: 0 8px;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
 #toolbar button {
   display: inline-flex;
   align-items: center;
@@ -508,6 +521,9 @@ body {
   color: var(--vscode-editor-foreground);
   line-height: 1.25 !important;
   padding: 0 !important;
+  /* Offset for the sticky toolbar so that scrollIntoView() from the outline
+     doesn't land the heading under the toolbar. */
+  scroll-margin-top: 56px;
 }
 
 .milkdown .ProseMirror h1 {
@@ -957,3 +973,184 @@ body {
   text-align: center;
   user-select: text;
 }
+
+/* ---------------------------------------------------------
+   Outline sidebar (floating overlay)
+   --------------------------------------------------------- */
+
+.mdpro-outline {
+  position: fixed;
+  top: 60px;
+  right: 16px;
+  width: var(--mdpro-outline-width, 280px);
+  max-height: calc(100vh - 80px);
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.3));
+  border-radius: 6px;
+  background: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+  color: var(--vscode-editor-foreground);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .25);
+  overflow: hidden;
+}
+
+.mdpro-outline.hidden {
+  display: none;
+}
+
+/* Drag handle pinned to the left edge of the panel. The panel is anchored
+   on the right, so dragging left increases width and dragging right shrinks. */
+.mdpro-outline-resize {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  cursor: ew-resize;
+  user-select: none;
+  z-index: 1;
+  background: transparent;
+  transition: background 120ms ease;
+}
+
+.mdpro-outline-resize:hover,
+.mdpro-outline-resize.dragging {
+  background: var(--vscode-sash-hoverBorder, var(--vscode-focusBorder, rgba(0,122,204,.4)));
+}
+
+/* When the outline is visible, reserve horizontal space on the right so the
+   floating panel never overlays editor content. Overlapping caused two bugs:
+   (1) hover-triggered popups from CodeMirror code cells (language menu,
+   tooltips) appeared underneath the outline and rapidly toggled as the cursor
+   crossed the boundary — visible flicker; (2) hovering the outline items
+   themselves competed for hit-testing with editor decorations beneath. */
+body.outline-visible {
+  padding-right: calc(var(--mdpro-outline-width, 280px) + 16px + 16px);
+  box-sizing: border-box;
+}
+
+.mdpro-outline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 6px 6px 12px;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--vscode-sideBarSectionHeader-foreground, var(--vscode-descriptionForeground));
+  border-bottom: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.2));
+  flex: 0 0 auto;
+}
+
+.mdpro-outline-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.mdpro-outline-close:hover {
+  background: var(--vscode-toolbar-hoverBackground, rgba(128,128,128,.15));
+}
+
+.mdpro-outline-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.outline-empty {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground, rgba(128,128,128,.7));
+  font-style: italic;
+}
+
+.outline-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-left: 2px solid transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 3px 12px 3px calc(10px + 12px * var(--outline-indent, 0));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.outline-item:hover {
+  background: var(--vscode-list-hoverBackground, rgba(128,128,128,.1));
+  border-left-color: var(--vscode-focusBorder, rgba(0,122,204,.5));
+}
+
+/* Visual hierarchy per heading level */
+.outline-item.outline-level-1 {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--vscode-editor-foreground);
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.outline-item.outline-level-2 {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--vscode-editor-foreground);
+}
+
+.outline-item.outline-level-3 {
+  font-size: 12px;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--vscode-editor-foreground) 92%, transparent);
+}
+
+.outline-item.outline-level-4 {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: color-mix(in srgb, var(--vscode-editor-foreground) 82%, transparent);
+}
+
+.outline-item.outline-level-5 {
+  font-size: 11px;
+  font-weight: 400;
+  color: color-mix(in srgb, var(--vscode-editor-foreground) 72%, transparent);
+}
+
+.outline-item.outline-level-6 {
+  font-size: 11px;
+  font-weight: 400;
+  font-style: italic;
+  color: color-mix(in srgb, var(--vscode-editor-foreground) 65%, transparent);
+}
+
+.outline-item:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+.outline-flash {
+  animation: mdpro-flash 800ms ease-out;
+}
+
+@keyframes mdpro-flash {
+  0%   { background-color: var(--vscode-editor-selectionBackground, rgba(128,128,128,.25)); }
+  100% { background-color: transparent; }
+}
+

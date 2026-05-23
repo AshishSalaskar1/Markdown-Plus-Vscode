@@ -2,7 +2,7 @@
   "name": "markdown-pro",
   "displayName": "Markdown Pro",
   "description": "WYSIWYG markdown editor for VS Code",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "publisher": "ashishsalaskar",
   "icon": "Markdown_Plus_Logo_v2.png",
   "license": "MIT",
@@ -254,6 +254,11 @@
           "type": "boolean",
           "default": true,
           "markdownDescription": "Show or hide the formatting toolbar at the top of the Markdown Pro editor."
+        },
+        "markdownPro.showOutline": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show or hide the document outline sidebar in the Markdown Pro editor."
         }
       }
     }

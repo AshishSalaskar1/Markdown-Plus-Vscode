@@ -919,6 +919,7 @@ const ICONS: Record<string, string> = {
   table: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>',
   hr: '<line x1="2" y1="12" x2="22" y2="12"/>',
   search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+  outline: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
 };
 
 function svgIcon(name: string, cls = ""): string {
@@ -927,9 +928,11 @@ function svgIcon(name: string, cls = ""): string {
 }
 
 interface ToolbarItem {
-  kind: "button" | "separator" | "heading-dropdown";
+  kind: "button" | "separator" | "heading-dropdown" | "spacer";
   icon?: string;
   tooltip?: string;
+  label?: string;
+  className?: string;
   action?: (crepe: Crepe) => void;
 }
 
@@ -1019,6 +1022,15 @@ const toolbarItems: ToolbarItem[] = [
     tooltip: "Find (Ctrl+F)",
     action: () => toggleSearchBar(),
   },
+  { kind: "spacer" },
+  {
+    kind: "button",
+    icon: "outline",
+    tooltip: "Toggle outline",
+    label: "Outline",
+    className: "toolbar-outline-btn",
+    action: () => toggleOutline(),
+  },
 ];
 
 function buildToolbar(crepe: Crepe, onBeforeAction: () => void): void {
@@ -1030,6 +1042,13 @@ function buildToolbar(crepe: Crepe, onBeforeAction: () => void): void {
       const sep = document.createElement("div");
       sep.className = "toolbar-separator";
       container.appendChild(sep);
+      continue;
+    }
+
+    if (item.kind === "spacer") {
+      const spacer = document.createElement("div");
+      spacer.className = "toolbar-spacer";
+      container.appendChild(spacer);
       continue;
     }
 
@@ -1088,7 +1107,14 @@ function buildToolbar(crepe: Crepe, onBeforeAction: () => void): void {
 
     // Regular button
     const btn = document.createElement("button");
-    btn.innerHTML = svgIcon(item.icon!);
+    if (item.label) {
+      btn.innerHTML = `${svgIcon(item.icon!)} <span>${item.label}</span>`;
+    } else {
+      btn.innerHTML = svgIcon(item.icon!);
+    }
+    if (item.className) {
+      btn.className = item.className;
+    }
     btn.setAttribute("data-tooltip", item.tooltip!);
     btn.addEventListener("mousedown", (e) => {
       e.preventDefault(); // keep editor focus
@@ -1097,6 +1123,16 @@ function buildToolbar(crepe: Crepe, onBeforeAction: () => void): void {
     });
     container.appendChild(btn);
   }
+}
+
+/** Toggle the outline panel's visibility and the body class that reserves
+ * layout space for it. Used by the toolbar outline button. */
+function toggleOutline(): void {
+  const outline = document.getElementById("outline");
+  if (!outline) return;
+  const willShow = outline.classList.contains("hidden");
+  outline.classList.toggle("hidden", !willShow);
+  document.body.classList.toggle("outline-visible", willShow);
 }
 
 // Wrap in async IIFE — esbuild IIFE format does not support top-level await.
@@ -1185,6 +1221,170 @@ function buildToolbar(crepe: Crepe, onBeforeAction: () => void): void {
   }
 
   // -------------------------------------------------------------------
+  // Outline (TOC) sidebar
+  // -------------------------------------------------------------------
+
+  interface OutlineEntry {
+    level: number;
+    text: string;
+    ordinal: number;
+  }
+
+  const OUTLINE_MIN_WIDTH = 160;
+  const OUTLINE_STORAGE_KEY = "markdownPro.outlineWidth";
+
+  /**
+   * Build the outline from the rendered editor DOM. Doing this from the DOM
+   * (rather than re-parsing markdown source) guarantees a 1:1 mapping between
+   * outline entries and the heading elements we scroll to on click — even
+   * when the document uses setext headings, HTML blocks, etc.
+   */
+  function extractOutlineFromDom(): OutlineEntry[] {
+    const headings = getEditorHeadings();
+    const out: OutlineEntry[] = [];
+    headings.forEach((el, i) => {
+      const level = Number(el.tagName.charAt(1)) || 1;
+      const text = (el.textContent || "").trim() || "Untitled";
+      out.push({ level, text, ordinal: i });
+    });
+    return out;
+  }
+
+  function getEditorHeadings(): HTMLElement[] {
+    const root = document.querySelector(".milkdown .ProseMirror") || document.getElementById("editor");
+    if (!root) return [];
+    return Array.from(root.querySelectorAll<HTMLElement>("h1,h2,h3,h4,h5,h6"));
+  }
+
+  function renderOutline(entries: OutlineEntry[]): void {
+    const list = document.getElementById("outline-list");
+    if (!list) return;
+    list.innerHTML = "";
+
+    if (entries.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "outline-empty";
+      empty.textContent = "No headings yet";
+      list.appendChild(empty);
+      return;
+    }
+
+    for (const entry of entries) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `outline-item outline-level-${entry.level}`;
+      button.style.setProperty("--outline-indent", String(entry.level - 1));
+      button.dataset.ordinal = String(entry.ordinal);
+      button.title = entry.text;
+      button.textContent = entry.text;
+      list.appendChild(button);
+    }
+  }
+
+  let outlineDebounce: number | undefined;
+  let outlineRenderedKey = "";
+  function scheduleOutlineRebuild(): void {
+    if (outlineDebounce) window.clearTimeout(outlineDebounce);
+    outlineDebounce = window.setTimeout(() => {
+      const entries = extractOutlineFromDom();
+      const key = entries.map((e) => `${e.level}\t${e.text}`).join("\n");
+      if (key === outlineRenderedKey) return;
+      outlineRenderedKey = key;
+      renderOutline(entries);
+    }, 120);
+  }
+
+  function attachOutlineClicks(): void {
+    const list = document.getElementById("outline-list");
+    list?.addEventListener("click", (event) => {
+      const target = (event.target as HTMLElement).closest(".outline-item") as HTMLElement | null;
+      if (!target) return;
+      event.preventDefault();
+      const ordinal = Number(target.dataset.ordinal ?? "-1");
+      if (ordinal < 0) return;
+
+      // Query headings fresh on every click so the index stays accurate even
+      // if the DOM changed between outline render and click.
+      const headings = getEditorHeadings();
+      const heading = headings[ordinal];
+      if (!heading) return;
+
+      // Scroll so the heading lands below the sticky toolbar instead of being
+      // hidden underneath it. Toolbar height is measured at click time so
+      // wrapping/zoom variations still work. Note: <html> has overflow:hidden
+      // and <body> is the actual scroll container, so we target body directly
+      // rather than document.scrollingElement (which would be <html>).
+      const toolbarEl = document.getElementById("toolbar");
+      const toolbarHeight = toolbarEl?.getBoundingClientRect().height ?? 0;
+      const offset = toolbarHeight + 12; // small breathing room
+      const scroller = document.body;
+      const absTop = heading.getBoundingClientRect().top + scroller.scrollTop;
+      scroller.scrollTo({ top: Math.max(0, absTop - offset), behavior: "smooth" });
+      heading.classList.add("outline-flash");
+      window.setTimeout(() => heading.classList.remove("outline-flash"), 800);
+    });
+  }
+
+  function initOutlineResize(): void {
+    const handle = document.getElementById("outline-resize");
+    const outline = document.getElementById("outline");
+    if (!handle || !outline) return;
+
+    const MIN_WIDTH = OUTLINE_MIN_WIDTH;
+    const MAX_WIDTH = 640;
+
+    // Restore persisted width.
+    try {
+      const saved = window.localStorage.getItem(OUTLINE_STORAGE_KEY);
+      if (saved) {
+        const w = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, parseInt(saved, 10)));
+        if (Number.isFinite(w)) {
+          document.documentElement.style.setProperty("--mdpro-outline-width", `${w}px`);
+        }
+      }
+    } catch { /* localStorage may be unavailable; fall back to default */ }
+
+    let startX = 0;
+    let startWidth = 0;
+
+    const onMove = (e: PointerEvent) => {
+      // Panel is anchored on the right edge, so moving the cursor LEFT
+      // increases width.
+      const delta = startX - e.clientX;
+      const next = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + delta));
+      document.documentElement.style.setProperty("--mdpro-outline-width", `${next}px`);
+    };
+
+    const onUp = (e: PointerEvent) => {
+      handle.classList.remove("dragging");
+      handle.releasePointerCapture?.(e.pointerId);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      const current = parseInt(getComputedStyle(outline).width, 10);
+      try { window.localStorage.setItem(OUTLINE_STORAGE_KEY, String(current)); } catch { /* ignore */ }
+    };
+
+    handle.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      startX = e.clientX;
+      startWidth = parseInt(getComputedStyle(outline).width, 10) || 280;
+      handle.classList.add("dragging");
+      handle.setPointerCapture?.(e.pointerId);
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    });
+  }
+
+  function attachOutlineClose(): void {
+    const closeBtn = document.getElementById("outline-close");
+    const outline = document.getElementById("outline");
+    closeBtn?.addEventListener("click", () => {
+      outline?.classList.add("hidden");
+      document.body.classList.remove("outline-visible");
+    });
+  }
+
+  // -------------------------------------------------------------------
   // Milkdown Crepe initialisation
   // -------------------------------------------------------------------
 
@@ -1235,6 +1435,19 @@ function buildToolbar(crepe: Crepe, onBeforeAction: () => void): void {
   // Initialise the search bar
   initSearchBar();
 
+  // Initialise the outline sidebar (resize handle + click-to-scroll).
+  initOutlineResize();
+  attachOutlineClicks();
+  attachOutlineClose();
+  // Reserve layout space for the outline so it doesn't overlay editor content
+  // (overlay caused flicker when hovering code cells whose hover popups would
+  // appear under the outline and rapidly toggle).
+  const outlineEl = document.getElementById("outline");
+  if (outlineEl && !outlineEl.classList.contains("hidden")) {
+    document.body.classList.add("outline-visible");
+  }
+  requestAnimationFrame(() => scheduleOutlineRebuild());
+
   if (frontmatterInput) {
     frontmatterInput.addEventListener("input", () => {
       markUserInitiatedChange();
@@ -1283,6 +1496,7 @@ function buildToolbar(crepe: Crepe, onBeforeAction: () => void): void {
       if (suppressOnChange || markdown === prevMarkdown) return;
 
       currentBodyMarkdown = markdown;
+      scheduleOutlineRebuild();
       scheduleDocumentSync();
     });
   });
@@ -1333,6 +1547,7 @@ function buildToolbar(crepe: Crepe, onBeforeAction: () => void): void {
       const parsedDocument = splitMarkdownDocument(markdown);
       currentFrontmatter = parsedDocument.frontmatter;
       currentBodyMarkdown = parsedDocument.body;
+      scheduleOutlineRebuild();
       renderFrontmatterPanel(currentFrontmatter);
 
       suppressOnChange = true;

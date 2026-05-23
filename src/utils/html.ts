@@ -71,6 +71,14 @@ export function getWebviewHtml(
     ></textarea>
   </section>
   <div id="editor"></div>
+  <aside id="outline" class="mdpro-outline" aria-label="Document outline">
+    <div id="outline-resize" class="mdpro-outline-resize" role="separator" aria-orientation="vertical" aria-label="Resize outline" title="Drag to resize outline"></div>
+    <div class="mdpro-outline-header">
+      <span class="mdpro-outline-title">Outline</span>
+      <button id="outline-close" class="mdpro-outline-close" title="Hide outline" aria-label="Hide outline">×</button>
+    </div>
+    <div id="outline-list" class="mdpro-outline-list" role="tree"></div>
+  </aside>
   <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`;
