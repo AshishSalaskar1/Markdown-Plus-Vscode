@@ -111,6 +111,26 @@ function applyShowToolbar(show: boolean): void {
   }
 }
 
+function updateOutlineButtonState(show: boolean): void {
+  const button = document.querySelector<HTMLButtonElement>("#toolbar .toolbar-outline-btn");
+  if (!button) return;
+  button.classList.toggle("active", show);
+  button.setAttribute("aria-pressed", String(show));
+  button.title = show ? "Hide outline" : "Show outline";
+}
+
+/**
+ * Show or hide the outline sidebar and keep the toolbar button state in sync.
+ */
+function applyShowOutline(show: boolean): void {
+  const outline = document.getElementById("outline");
+  if (outline) {
+    outline.classList.toggle("hidden", !show);
+  }
+  document.body.classList.toggle("outline-visible", show);
+  updateOutlineButtonState(show);
+}
+
 interface ParsedDocument {
   frontmatter: string;
   body: string;
@@ -1130,9 +1150,7 @@ function buildToolbar(crepe: Crepe, onBeforeAction: () => void): void {
 function toggleOutline(): void {
   const outline = document.getElementById("outline");
   if (!outline) return;
-  const willShow = outline.classList.contains("hidden");
-  outline.classList.toggle("hidden", !willShow);
-  document.body.classList.toggle("outline-visible", willShow);
+  applyShowOutline(outline.classList.contains("hidden"));
 }
 
 // Wrap in async IIFE — esbuild IIFE format does not support top-level await.
@@ -1379,8 +1397,7 @@ function toggleOutline(): void {
     const closeBtn = document.getElementById("outline-close");
     const outline = document.getElementById("outline");
     closeBtn?.addEventListener("click", () => {
-      outline?.classList.add("hidden");
-      document.body.classList.remove("outline-visible");
+      applyShowOutline(false);
     });
   }
 
@@ -1443,9 +1460,7 @@ function toggleOutline(): void {
   // (overlay caused flicker when hovering code cells whose hover popups would
   // appear under the outline and rapidly toggle).
   const outlineEl = document.getElementById("outline");
-  if (outlineEl && !outlineEl.classList.contains("hidden")) {
-    document.body.classList.add("outline-visible");
-  }
+  applyShowOutline(Boolean(outlineEl && !outlineEl.classList.contains("hidden")));
   requestAnimationFrame(() => scheduleOutlineRebuild());
 
   if (frontmatterInput) {
@@ -1506,7 +1521,7 @@ function toggleOutline(): void {
   // -------------------------------------------------------------------
 
   window.addEventListener("message", (event) => {
-    const { type, markdown, version, theme, fontSize, lineHeight, fontFamily, contentWidth, showToolbar } = event.data;
+    const { type, markdown, version, theme, fontSize, lineHeight, fontFamily, contentWidth, showToolbar, showOutline } = event.data;
 
     if ((type === "init" || type === "update") && typeof markdown === "string" && version > currentVersion) {
       cancelDocumentSync();
@@ -1542,6 +1557,7 @@ function toggleOutline(): void {
         if (typeof fontFamily === "string") applyFontFamily(fontFamily);
         if (typeof contentWidth === "number") applyContentWidth(contentWidth);
         if (typeof showToolbar === "boolean") applyShowToolbar(showToolbar);
+        if (typeof showOutline === "boolean") applyShowOutline(showOutline);
       }
 
       const parsedDocument = splitMarkdownDocument(markdown);
@@ -1585,6 +1601,10 @@ function toggleOutline(): void {
 
     if (type === "showToolbarChange" && typeof showToolbar === "boolean") {
       applyShowToolbar(showToolbar);
+    }
+
+    if (type === "showOutlineChange" && typeof showOutline === "boolean") {
+      applyShowOutline(showOutline);
     }
 
     if (type === "toggleSearch") {

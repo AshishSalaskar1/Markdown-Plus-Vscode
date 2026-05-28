@@ -11,6 +11,7 @@ import { getNonce } from './nonce';
 export function getWebviewHtml(
   webview: vscode.Webview,
   extensionUri: vscode.Uri,
+  showOutline: boolean,
   baseUri?: string,
 ): string {
   const scriptUri = webview.asWebviewUri(
@@ -28,6 +29,8 @@ export function getWebviewHtml(
   const baseTag = baseUri
     ? `<base href="${baseUri.endsWith('/') ? baseUri : baseUri + '/'}">`
     : '';
+
+  const outlineClassName = showOutline ? 'mdpro-outline' : 'mdpro-outline hidden';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -71,7 +74,7 @@ export function getWebviewHtml(
     ></textarea>
   </section>
   <div id="editor"></div>
-  <aside id="outline" class="mdpro-outline" aria-label="Document outline">
+  <aside id="outline" class="${outlineClassName}" aria-label="Document outline">
     <div id="outline-resize" class="mdpro-outline-resize" role="separator" aria-orientation="vertical" aria-label="Resize outline" title="Drag to resize outline"></div>
     <div class="mdpro-outline-header">
       <span class="mdpro-outline-title">Outline</span>

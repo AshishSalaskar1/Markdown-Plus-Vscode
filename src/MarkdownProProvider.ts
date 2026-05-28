@@ -96,6 +96,23 @@ export function broadcastShowToolbar(
   }
 }
 
+/** Read the persisted outline visibility from configuration. */
+export function getActiveShowOutline(): boolean {
+  return vscode.workspace
+    .getConfiguration('markdownPro')
+    .get<boolean>('showOutline', false);
+}
+
+/** Send an outline visibility change message to all open webview panels. */
+export function broadcastShowOutline(
+  panels: vscode.WebviewPanel[],
+  showOutline: boolean,
+): void {
+  for (const panel of panels) {
+    panel.webview.postMessage({ type: 'showOutlineChange', showOutline });
+  }
+}
+
 /**
  * CustomTextEditorProvider that drives the Markdown Pro WYSIWYG editor.
  *
@@ -146,6 +163,9 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
         if (e.affectsConfiguration('markdownPro.showToolbar')) {
           broadcastShowToolbar([...provider.activePanels], getActiveShowToolbar());
         }
+        if (e.affectsConfiguration('markdownPro.showOutline')) {
+          broadcastShowOutline([...provider.activePanels], getActiveShowOutline());
+        }
       }),
     );
 
@@ -192,6 +212,7 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
     webviewPanel.webview.html = getWebviewHtml(
       webviewPanel.webview,
       this.context.extensionUri,
+      getActiveShowOutline(),
       baseUri,
     );
 
@@ -266,6 +287,7 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
               fontFamily: getActiveFontFamily(),
               contentWidth: getActiveContentWidth(),
               showToolbar: getActiveShowToolbar(),
+              showOutline: getActiveShowOutline(),
             });
             break;
           }

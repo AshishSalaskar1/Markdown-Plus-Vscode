@@ -285,10 +285,28 @@ body {
 
 #toolbar button.toolbar-outline-btn {
   width: auto;
-  padding: 0 8px;
+  min-width: 72px;
+  padding: 0 10px;
   gap: 6px;
   font-size: 12px;
   font-weight: 500;
+  border: 1px solid color-mix(in srgb, var(--vscode-button-border, transparent) 60%, var(--vscode-editorWidget-border, rgba(128,128,128,.25)));
+  background: color-mix(in srgb, var(--vscode-button-secondaryBackground, rgba(128,128,128,.16)) 82%, transparent);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+#toolbar button.toolbar-outline-btn:hover {
+  background: color-mix(in srgb, var(--vscode-button-secondaryHoverBackground, rgba(128,128,128,.24)) 88%, transparent);
+}
+
+#toolbar button.toolbar-outline-btn.active {
+  background: color-mix(in srgb, var(--vscode-button-background, var(--vscode-focusBorder, rgba(0,122,204,.35))) 28%, var(--vscode-button-secondaryBackground, rgba(128,128,128,.18)));
+  border-color: color-mix(in srgb, var(--vscode-button-background, var(--vscode-focusBorder, rgba(0,122,204,.45))) 45%, transparent);
+  color: var(--vscode-button-foreground, var(--vscode-editor-foreground));
+}
+
+#toolbar button.toolbar-outline-btn.active:hover {
+  background: color-mix(in srgb, var(--vscode-button-hoverBackground, var(--vscode-button-background, rgba(0,122,204,.45))) 34%, var(--vscode-button-secondaryHoverBackground, rgba(128,128,128,.24)));
 }
 
 #toolbar button {
@@ -1153,4 +1171,3 @@ body.outline-visible {
   0%   { background-color: var(--vscode-editor-selectionBackground, rgba(128,128,128,.25)); }
   100% { background-color: transparent; }
 }
-
