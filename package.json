@@ -2,7 +2,7 @@
   "name": "markdown-pro",
   "displayName": "Markdown Pro",
   "description": "WYSIWYG markdown editor for VS Code",
-  "version": "0.8.6",
+  "version": "0.8.7",
   "publisher": "ashishsalaskar",
   "icon": "Markdown_Plus_Logo_v2.png",
   "license": "MIT",
@@ -189,7 +189,13 @@
             "rose-pine",
             "rose-pine-dawn",
             "monokai-pro",
-            "everforest-dark"
+            "everforest-dark",
+            "material-ocean",
+            "ayu-mirage",
+            "cobalt2",
+            "one-light",
+            "ayu-light",
+            "flexoki-light"
           ],
           "enumItemLabels": [
             "VS Code (match editor theme)",
@@ -208,7 +214,13 @@
             "Rosé Pine",
             "Rosé Pine Dawn",
             "Monokai Pro",
-            "Everforest Dark"
+            "Everforest Dark",
+            "Material Ocean",
+            "Ayu Mirage",
+            "Cobalt2",
+            "One Light",
+            "Ayu Light",
+            "Flexoki Light"
           ],
           "markdownDescription": "Color theme for the Markdown Pro WYSIWYG editor. Select `VS Code` to inherit your current editor theme, or choose a standalone theme."
         },

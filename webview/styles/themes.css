@@ -6,6 +6,7 @@
    ============================================================ */
 
 /* ---- GitHub Light ---- */
+body[data-theme="github-light"],
 .milkdown[data-theme="github-light"] {
   --crepe-color-background: #ffffff;
   --crepe-color-on-background: #1f2328;
@@ -34,6 +35,7 @@ body[data-theme="github-light"] {
 }
 
 /* ---- GitHub Dark ---- */
+body[data-theme="github-dark"],
 .milkdown[data-theme="github-dark"] {
   --crepe-color-background: #0d1117;
   --crepe-color-on-background: #e6edf3;
@@ -62,6 +64,7 @@ body[data-theme="github-dark"] {
 }
 
 /* ---- Dracula ---- */
+body[data-theme="dracula"],
 .milkdown[data-theme="dracula"] {
   --crepe-color-background: #282a36;
   --crepe-color-on-background: #f8f8f2;
@@ -90,6 +93,7 @@ body[data-theme="dracula"] {
 }
 
 /* ---- Nord ---- */
+body[data-theme="nord"],
 .milkdown[data-theme="nord"] {
   --crepe-color-background: #2e3440;
   --crepe-color-on-background: #d8dee9;
@@ -118,6 +122,7 @@ body[data-theme="nord"] {
 }
 
 /* ---- Solarized Light ---- */
+body[data-theme="solarized-light"],
 .milkdown[data-theme="solarized-light"] {
   --crepe-color-background: #fdf6e3;
   --crepe-color-on-background: #657b83;
@@ -146,6 +151,7 @@ body[data-theme="solarized-light"] {
 }
 
 /* ---- Solarized Dark ---- */
+body[data-theme="solarized-dark"],
 .milkdown[data-theme="solarized-dark"] {
   --crepe-color-background: #002b36;
   --crepe-color-on-background: #839496;
@@ -174,6 +180,7 @@ body[data-theme="solarized-dark"] {
 }
 
 /* ---- One Dark ---- */
+body[data-theme="one-dark"],
 .milkdown[data-theme="one-dark"] {
   --crepe-color-background: #282c34;
   --crepe-color-on-background: #abb2bf;
@@ -202,6 +209,7 @@ body[data-theme="one-dark"] {
 }
 
 /* ---- Tokyo Night ---- */
+body[data-theme="tokyo-night"],
 .milkdown[data-theme="tokyo-night"] {
   --crepe-color-background: #1a1b26;
   --crepe-color-on-background: #a9b1d6;
@@ -230,6 +238,7 @@ body[data-theme="tokyo-night"] {
 }
 
 /* ---- Gruvbox Light ---- */
+body[data-theme="gruvbox-light"],
 .milkdown[data-theme="gruvbox-light"] {
   --crepe-color-background: #fbf1c7;
   --crepe-color-on-background: #3c3836;
@@ -258,6 +267,7 @@ body[data-theme="gruvbox-light"] {
 }
 
 /* ---- Gruvbox Dark ---- */
+body[data-theme="gruvbox-dark"],
 .milkdown[data-theme="gruvbox-dark"] {
   --crepe-color-background: #282828;
   --crepe-color-on-background: #ebdbb2;
@@ -286,6 +296,7 @@ body[data-theme="gruvbox-dark"] {
 }
 
 /* ---- Catppuccin Mocha ---- */
+body[data-theme="catppuccin-mocha"],
 .milkdown[data-theme="catppuccin-mocha"] {
   --crepe-color-background: #1e1e2e;
   --crepe-color-on-background: #cdd6f4;
@@ -314,6 +325,7 @@ body[data-theme="catppuccin-mocha"] {
 }
 
 /* ---- Catppuccin Latte ---- */
+body[data-theme="catppuccin-latte"],
 .milkdown[data-theme="catppuccin-latte"] {
   --crepe-color-background: #eff1f5;
   --crepe-color-on-background: #4c4f69;
@@ -342,6 +354,7 @@ body[data-theme="catppuccin-latte"] {
 }
 
 /* ---- Rosé Pine ---- */
+body[data-theme="rose-pine"],
 .milkdown[data-theme="rose-pine"] {
   --crepe-color-background: #191724;
   --crepe-color-on-background: #e0def4;
@@ -370,6 +383,7 @@ body[data-theme="rose-pine"] {
 }
 
 /* ---- Rosé Pine Dawn ---- */
+body[data-theme="rose-pine-dawn"],
 .milkdown[data-theme="rose-pine-dawn"] {
   --crepe-color-background: #faf4ed;
   --crepe-color-on-background: #575279;
@@ -398,6 +412,7 @@ body[data-theme="rose-pine-dawn"] {
 }
 
 /* ---- Monokai Pro ---- */
+body[data-theme="monokai-pro"],
 .milkdown[data-theme="monokai-pro"] {
   --crepe-color-background: #2d2a2e;
   --crepe-color-on-background: #fcfcfa;
@@ -426,6 +441,7 @@ body[data-theme="monokai-pro"] {
 }
 
 /* ---- Everforest Dark ---- */
+body[data-theme="everforest-dark"],
 .milkdown[data-theme="everforest-dark"] {
   --crepe-color-background: #2d353b;
   --crepe-color-on-background: #d3c6aa;
@@ -516,4 +532,326 @@ body[data-theme="everforest-dark"] {
 /* ---- Blockquote background for non-vscode themes ---- */
 .milkdown[data-theme] .ProseMirror blockquote {
   background: var(--crepe-color-surface) !important;
+}
+
+/* ---- List marker / label color for non-vscode themes ---- */
+.milkdown[data-theme] .milkdown-list-item-block li .label-wrapper .label {
+  color: var(--crepe-color-on-background) !important;
+}
+
+.milkdown[data-theme] .ProseMirror ol li::marker,
+.milkdown[data-theme] .ProseMirror ul li::marker {
+  color: var(--crepe-color-on-background) !important;
+}
+
+/* ---- Heading color hierarchy for non-vscode themes ----
+   H1–H3 use the full on-background color so they are always
+   the most prominent elements. H4–H6 fade progressively. ---- */
+.milkdown[data-theme] .ProseMirror h1,
+.milkdown[data-theme] .ProseMirror h2,
+.milkdown[data-theme] .ProseMirror h3 {
+  color: var(--crepe-color-on-background) !important;
+}
+
+.milkdown[data-theme] .ProseMirror h4 {
+  color: color-mix(in srgb, var(--crepe-color-on-background) 82%, var(--crepe-color-background)) !important;
+}
+
+.milkdown[data-theme] .ProseMirror h5 {
+  color: color-mix(in srgb, var(--crepe-color-on-background) 68%, var(--crepe-color-background)) !important;
+}
+
+.milkdown[data-theme] .ProseMirror h6 {
+  color: var(--crepe-color-on-surface-variant) !important;
+}
+
+/* ---- Outline panel for non-vscode themes ----
+   The outline panel lives outside .milkdown, so it needs its own
+   overrides that read the CSS variables now defined on body[data-theme]. ---- */
+body[data-theme] .mdpro-outline {
+  background: var(--crepe-color-surface) !important;
+  border-color: var(--crepe-color-outline) !important;
+  color: var(--crepe-color-on-surface) !important;
+  box-shadow: var(--crepe-shadow-2) !important;
+}
+
+body[data-theme] .mdpro-outline-header {
+  color: var(--crepe-color-on-surface-variant) !important;
+  border-bottom-color: var(--crepe-color-outline) !important;
+}
+
+body[data-theme] .outline-item {
+  color: var(--crepe-color-on-surface) !important;
+}
+
+body[data-theme] .outline-item:hover {
+  background: var(--crepe-color-hover) !important;
+  border-left-color: var(--crepe-color-primary) !important;
+}
+
+body[data-theme] .outline-item.outline-level-1 {
+  color: var(--crepe-color-on-background) !important;
+}
+
+body[data-theme] .outline-item.outline-level-2 {
+  color: var(--crepe-color-on-background) !important;
+}
+
+body[data-theme] .outline-item.outline-level-3 {
+  color: color-mix(in srgb, var(--crepe-color-on-surface) 88%, var(--crepe-color-background)) !important;
+}
+
+body[data-theme] .outline-item.outline-level-4 {
+  color: color-mix(in srgb, var(--crepe-color-on-surface) 75%, var(--crepe-color-background)) !important;
+}
+
+body[data-theme] .outline-item.outline-level-5 {
+  color: color-mix(in srgb, var(--crepe-color-on-surface) 62%, var(--crepe-color-background)) !important;
+}
+
+body[data-theme] .outline-item.outline-level-6 {
+  color: var(--crepe-color-on-surface-variant) !important;
+}
+
+body[data-theme] .outline-item:focus {
+  outline-color: var(--crepe-color-primary) !important;
+}
+
+body[data-theme] .outline-flash {
+  animation: mdpro-theme-flash 800ms ease-out;
+}
+
+@keyframes mdpro-theme-flash {
+  0%   { background-color: var(--crepe-color-selected); }
+  100% { background-color: transparent; }
+}
+
+/* ---- Toolbar for non-vscode themes ---- */
+body[data-theme] #toolbar {
+  background: color-mix(in srgb, var(--crepe-color-background) 88%, transparent) !important;
+  border-bottom-color: var(--crepe-color-outline) !important;
+}
+
+body[data-theme] #toolbar button {
+  color: var(--crepe-color-on-background) !important;
+}
+
+body[data-theme] #toolbar button:hover {
+  background: var(--crepe-color-hover) !important;
+}
+
+body[data-theme] #toolbar .toolbar-separator {
+  background: var(--crepe-color-outline) !important;
+}
+
+body[data-theme] #toolbar .heading-menu {
+  background: var(--crepe-color-surface) !important;
+  border-color: var(--crepe-color-outline) !important;
+  box-shadow: var(--crepe-shadow-2) !important;
+}
+
+body[data-theme] #toolbar .heading-menu button {
+  color: var(--crepe-color-on-surface) !important;
+}
+
+body[data-theme] #toolbar .heading-menu button:hover {
+  background: var(--crepe-color-hover) !important;
+}
+
+body[data-theme] #toolbar button.toolbar-outline-btn {
+  background: color-mix(in srgb, var(--crepe-color-surface) 90%, var(--crepe-color-on-surface) 10%) !important;
+  border-color: var(--crepe-color-outline) !important;
+  color: var(--crepe-color-on-background) !important;
+}
+
+body[data-theme] #toolbar button.toolbar-outline-btn:hover {
+  background: var(--crepe-color-hover) !important;
+}
+
+body[data-theme] #toolbar button.toolbar-outline-btn.active {
+  background: color-mix(in srgb, var(--crepe-color-primary) 20%, var(--crepe-color-surface)) !important;
+  border-color: var(--crepe-color-primary) !important;
+  color: var(--crepe-color-primary) !important;
+}
+
+/* ============================================================
+   NEW DARK THEMES
+   ============================================================ */
+
+/* ---- Material Ocean ---- */
+body[data-theme="material-ocean"],
+.milkdown[data-theme="material-ocean"] {
+  --crepe-color-background: #0F111A;
+  --crepe-color-on-background: #8F93A2;
+  --crepe-color-surface: #1A1C25;
+  --crepe-color-surface-low: #090B12;
+  --crepe-color-on-surface: #8F93A2;
+  --crepe-color-on-surface-variant: #464B5D;
+  --crepe-color-outline: #1F2233;
+  --crepe-color-primary: #84FFFF;
+  --crepe-color-secondary: #1A1C25;
+  --crepe-color-on-secondary: #8F93A2;
+  --crepe-color-inverse: #8F93A2;
+  --crepe-color-on-inverse: #0F111A;
+  --crepe-color-inline-code: #F78C6C;
+  --crepe-color-error: #FF5370;
+  --crepe-color-hover: rgba(31, 34, 51, 0.7);
+  --crepe-color-selected: rgba(132, 255, 255, 0.15);
+  --crepe-color-inline-area: #1A1C25;
+  --crepe-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --crepe-shadow-2: 0 3px 6px rgba(0, 0, 0, 0.5);
+}
+
+body[data-theme="material-ocean"] {
+  background: #0F111A !important;
+  color: #8F93A2 !important;
+}
+
+/* ---- Ayu Mirage ---- */
+body[data-theme="ayu-mirage"],
+.milkdown[data-theme="ayu-mirage"] {
+  --crepe-color-background: #1F2430;
+  --crepe-color-on-background: #CBCCC6;
+  --crepe-color-surface: #242936;
+  --crepe-color-surface-low: #1A1F2B;
+  --crepe-color-on-surface: #CBCCC6;
+  --crepe-color-on-surface-variant: #707A8C;
+  --crepe-color-outline: #343D4F;
+  --crepe-color-primary: #FFCC66;
+  --crepe-color-secondary: #343D4F;
+  --crepe-color-on-secondary: #CBCCC6;
+  --crepe-color-inverse: #CBCCC6;
+  --crepe-color-on-inverse: #1F2430;
+  --crepe-color-inline-code: #F28779;
+  --crepe-color-error: #FF3333;
+  --crepe-color-hover: rgba(52, 61, 79, 0.6);
+  --crepe-color-selected: rgba(255, 204, 102, 0.15);
+  --crepe-color-inline-area: #242936;
+  --crepe-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --crepe-shadow-2: 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+body[data-theme="ayu-mirage"] {
+  background: #1F2430 !important;
+  color: #CBCCC6 !important;
+}
+
+/* ---- Cobalt2 ---- */
+body[data-theme="cobalt2"],
+.milkdown[data-theme="cobalt2"] {
+  --crepe-color-background: #193549;
+  --crepe-color-on-background: #FFFFFF;
+  --crepe-color-surface: #1E3F5C;
+  --crepe-color-surface-low: #122B3B;
+  --crepe-color-on-surface: #E0ECF4;
+  --crepe-color-on-surface-variant: #91C2D5;
+  --crepe-color-outline: #234E6B;
+  --crepe-color-primary: #FF9D00;
+  --crepe-color-secondary: #234E6B;
+  --crepe-color-on-secondary: #FFFFFF;
+  --crepe-color-inverse: #FFFFFF;
+  --crepe-color-on-inverse: #193549;
+  --crepe-color-inline-code: #80FCFF;
+  --crepe-color-error: #FF628C;
+  --crepe-color-hover: rgba(35, 78, 107, 0.7);
+  --crepe-color-selected: rgba(255, 157, 0, 0.2);
+  --crepe-color-inline-area: #1E3F5C;
+  --crepe-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --crepe-shadow-2: 0 3px 6px rgba(0, 0, 0, 0.5);
+}
+
+body[data-theme="cobalt2"] {
+  background: #193549 !important;
+  color: #FFFFFF !important;
+}
+
+/* ============================================================
+   NEW LIGHT THEMES
+   ============================================================ */
+
+/* ---- One Light ---- */
+body[data-theme="one-light"],
+.milkdown[data-theme="one-light"] {
+  --crepe-color-background: #FAFAFA;
+  --crepe-color-on-background: #383A42;
+  --crepe-color-surface: #EBEBEB;
+  --crepe-color-surface-low: #F5F5F5;
+  --crepe-color-on-surface: #383A42;
+  --crepe-color-on-surface-variant: #9E9E9E;
+  --crepe-color-outline: #D3D3D3;
+  --crepe-color-primary: #4078F2;
+  --crepe-color-secondary: #E5E5E5;
+  --crepe-color-on-secondary: #383A42;
+  --crepe-color-inverse: #383A42;
+  --crepe-color-on-inverse: #FAFAFA;
+  --crepe-color-inline-code: #E45649;
+  --crepe-color-error: #E45649;
+  --crepe-color-hover: rgba(211, 211, 211, 0.5);
+  --crepe-color-selected: rgba(64, 120, 242, 0.12);
+  --crepe-color-inline-area: #EBEBEB;
+  --crepe-shadow-1: 0 1px 3px rgba(56, 58, 66, 0.1);
+  --crepe-shadow-2: 0 3px 6px rgba(56, 58, 66, 0.1);
+}
+
+body[data-theme="one-light"] {
+  background: #FAFAFA !important;
+  color: #383A42 !important;
+}
+
+/* ---- Ayu Light ---- */
+body[data-theme="ayu-light"],
+.milkdown[data-theme="ayu-light"] {
+  --crepe-color-background: #FAFAFA;
+  --crepe-color-on-background: #5C6166;
+  --crepe-color-surface: #F0F0F0;
+  --crepe-color-surface-low: #F5F5F5;
+  --crepe-color-on-surface: #5C6166;
+  --crepe-color-on-surface-variant: #8A9199;
+  --crepe-color-outline: #D8D8D8;
+  --crepe-color-primary: #F2890C;
+  --crepe-color-secondary: #EAF1FB;
+  --crepe-color-on-secondary: #5C6166;
+  --crepe-color-inverse: #5C6166;
+  --crepe-color-on-inverse: #FAFAFA;
+  --crepe-color-inline-code: #E65050;
+  --crepe-color-error: #E65050;
+  --crepe-color-hover: rgba(216, 216, 216, 0.5);
+  --crepe-color-selected: rgba(242, 137, 12, 0.12);
+  --crepe-color-inline-area: #F0F0F0;
+  --crepe-shadow-1: 0 1px 3px rgba(92, 97, 102, 0.1);
+  --crepe-shadow-2: 0 3px 6px rgba(92, 97, 102, 0.1);
+}
+
+body[data-theme="ayu-light"] {
+  background: #FAFAFA !important;
+  color: #5C6166 !important;
+}
+
+/* ---- Flexoki Light ---- */
+body[data-theme="flexoki-light"],
+.milkdown[data-theme="flexoki-light"] {
+  --crepe-color-background: #FFFCF0;
+  --crepe-color-on-background: #100F0F;
+  --crepe-color-surface: #F2F0E5;
+  --crepe-color-surface-low: #FFFCF0;
+  --crepe-color-on-surface: #100F0F;
+  --crepe-color-on-surface-variant: #6F6E69;
+  --crepe-color-outline: #DAD8CE;
+  --crepe-color-primary: #4385BE;
+  --crepe-color-secondary: #E6E4D9;
+  --crepe-color-on-secondary: #100F0F;
+  --crepe-color-inverse: #100F0F;
+  --crepe-color-on-inverse: #FFFCF0;
+  --crepe-color-inline-code: #AF3029;
+  --crepe-color-error: #D14D41;
+  --crepe-color-hover: rgba(218, 216, 206, 0.5);
+  --crepe-color-selected: rgba(67, 133, 190, 0.12);
+  --crepe-color-inline-area: #F2F0E5;
+  --crepe-shadow-1: 0 1px 3px rgba(16, 15, 15, 0.1);
+  --crepe-shadow-2: 0 3px 6px rgba(16, 15, 15, 0.1);
+}
+
+body[data-theme="flexoki-light"] {
+  background: #FFFCF0 !important;
+  color: #100F0F !important;
 }

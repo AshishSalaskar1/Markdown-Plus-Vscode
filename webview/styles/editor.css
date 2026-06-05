@@ -816,6 +816,13 @@ body {
   height: auto !important;
   padding: 0 !important;
   line-height: 1.6 !important;
+  color: var(--vscode-editor-foreground) !important;
+}
+
+/* Native ::marker fallback for any ol/ul not using Crepe's block component */
+.milkdown .ProseMirror ol li::marker,
+.milkdown .ProseMirror ul li::marker {
+  color: var(--vscode-editor-foreground) !important;
 }
 
 .milkdown .milkdown-list-item-block > .list-item > .children p {

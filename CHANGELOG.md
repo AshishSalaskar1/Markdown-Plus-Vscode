@@ -4,6 +4,19 @@ All notable changes to the **Markdown Pro** extension will be documented in this
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.8.7] - 2026-06-05
+
+### Added
+
+* 6 new built-in themes: Material Ocean, Ayu Mirage, Cobalt2 (dark) and One Light, Ayu Light, Flexoki Light (light).
+
+### Fixed
+
+* Document outline panel now correctly adopts the active custom theme colors instead of staying locked to the VS Code editor theme colors.
+* Heading color hierarchy in light themes corrected — H1 is now always the most visually prominent heading, with H2–H6 fading progressively, preventing smaller headings from appearing darker than larger ones.
+* Toolbar, heading dropdown, and outline toggle button now match the active custom theme.
+* Numbered and bulleted list markers (numbers/bullets) are now fully visible in all themes instead of rendering in a muted, low-contrast color.
+
 ## [0.8.5] - 2026-05-23
 
 ### Added

@@ -24,7 +24,13 @@ export const THEMES: readonly ThemeDefinition[] = [
   { id: 'rose-pine',        label: '$(symbol-color) Rosé Pine',        description: 'Soho vibes for dark coding' },
   { id: 'rose-pine-dawn',   label: '$(symbol-color) Rosé Pine Dawn',   description: 'Rosé Pine for light backgrounds' },
   { id: 'monokai-pro',      label: '$(symbol-color) Monokai Pro',      description: 'Classic iconic dark theme' },
-  { id: 'everforest-dark',  label: '$(symbol-color) Everforest Dark',  description: 'Warm green nature-inspired palette' },] as const;
+  { id: 'everforest-dark',  label: '$(symbol-color) Everforest Dark',  description: 'Warm green nature-inspired palette' },
+  { id: 'material-ocean',   label: '$(symbol-color) Material Ocean',   description: 'Material Design deep ocean dark palette' },
+  { id: 'ayu-mirage',       label: '$(symbol-color) Ayu Mirage',       description: 'Warm amber accents on dark navy' },
+  { id: 'cobalt2',          label: '$(symbol-color) Cobalt2',          description: 'Vibrant orange on deep cobalt blue' },
+  { id: 'one-light',        label: '$(symbol-color) One Light',        description: "Atom's One Light companion theme" },
+  { id: 'ayu-light',        label: '$(symbol-color) Ayu Light',        description: 'Warm daylight palette by Ayu' },
+  { id: 'flexoki-light',    label: '$(symbol-color) Flexoki Light',    description: 'Ink-and-paper inspired warm light theme' },] as const;
 
 /** Read the persisted theme from configuration. */
 export function getActiveTheme(): string {
