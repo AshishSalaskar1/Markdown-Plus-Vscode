@@ -113,6 +113,23 @@ export function broadcastShowOutline(
   }
 }
 
+/** Read the persisted source-pane (code view) visibility from configuration. */
+export function getActiveShowSource(): boolean {
+  return vscode.workspace
+    .getConfiguration('markdownPro')
+    .get<boolean>('showSource', false);
+}
+
+/** Send a source-pane visibility change message to all open webview panels. */
+export function broadcastShowSource(
+  panels: vscode.WebviewPanel[],
+  showSource: boolean,
+): void {
+  for (const panel of panels) {
+    panel.webview.postMessage({ type: 'showSourceChange', showSource });
+  }
+}
+
 /**
  * CustomTextEditorProvider that drives the Markdown Pro WYSIWYG editor.
  *
@@ -165,6 +182,9 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
         }
         if (e.affectsConfiguration('markdownPro.showOutline')) {
           broadcastShowOutline([...provider.activePanels], getActiveShowOutline());
+        }
+        if (e.affectsConfiguration('markdownPro.showSource')) {
+          broadcastShowSource([...provider.activePanels], getActiveShowSource());
         }
       }),
     );
@@ -288,6 +308,7 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
               contentWidth: getActiveContentWidth(),
               showToolbar: getActiveShowToolbar(),
               showOutline: getActiveShowOutline(),
+              showSource: getActiveShowSource(),
             });
             break;
           }

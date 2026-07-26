@@ -73,7 +73,24 @@ export function getWebviewHtml(
       aria-label="Markdown document properties"
     ></textarea>
   </section>
-  <div id="editor"></div>
+  <main id="split-editor" class="split-editor">
+    <section id="rich-pane" class="editor-pane rich-pane" aria-label="Rich text editor">
+      <div id="editor"></div>
+    </section>
+    <section id="source-pane" class="editor-pane source-pane hidden" aria-label="Markdown source">
+      <div id="source-resize" class="source-resize" role="separator" aria-orientation="vertical" aria-label="Resize code view" title="Drag to resize code view"></div>
+      <div class="source-pane-header">
+        <span>Markdown source</span>
+        <span class="source-pane-hint">Edits here preserve unsupported Markdown</span>
+      </div>
+      <textarea
+        id="source-input"
+        class="source-input"
+        spellcheck="false"
+        aria-label="Raw Markdown source"
+      ></textarea>
+    </section>
+  </main>
   <aside id="outline" class="${outlineClassName}" aria-label="Document outline">
     <div id="outline-resize" class="mdpro-outline-resize" role="separator" aria-orientation="vertical" aria-label="Resize outline" title="Drag to resize outline"></div>
     <div class="mdpro-outline-header">

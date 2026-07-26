@@ -4,6 +4,26 @@ All notable changes to the **Markdown Pro** extension will be documented in this
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.9.0] - 2026-07-26
+
+### Added
+
+* **Split code view** — a raw Markdown source pane that sits beside the rich text editor, toggled with the new **Code** button in the toolbar. Hidden by default.
+* Editing in the code pane bypasses the WYSIWYG serializer entirely, so directives, raw HTML, and other custom syntax the rich schema cannot represent survive untouched.
+* Resizable divider between the two panes — drag to adjust, double-click to reset. The width is remembered between sessions.
+* Two-way navigation sync: clicking a block in the rich editor scrolls the code pane to the matching Markdown, and scrolling the code pane highlights the corresponding block in the rich editor.
+* Word wrap in the code pane, so long lines stay within the pane width.
+* New `markdownPro.showSource` setting to control whether the code view is open by default.
+
+### Fixed
+
+* Typing in the code pane no longer scrolls the view away from the cursor.
+* Clicking in the rich editor no longer steals focus into the code pane.
+* The rich pane is no longer rebuilt on every keystroke while typing in the code pane, removing the constant refresh flicker.
+* Rich editor output can no longer overwrite text while the code pane is being edited.
+* Pending edits are now flushed when the editor loses focus instead of being discarded, so the last keystrokes are never lost.
+* The code pane stays pinned in the viewport instead of scrolling out of view with the document.
+
 ## [0.8.7] - 2026-06-05
 
 ### Added

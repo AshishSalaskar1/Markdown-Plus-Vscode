@@ -79,6 +79,150 @@ body {
   box-sizing: border-box;
 }
 
+.split-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: calc(100vh - 40px);
+  border-top: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.15));
+}
+
+body.source-visible .split-editor {
+  grid-template-columns: minmax(0, 1fr) var(--mdpro-source-width, 42%);
+}
+
+.editor-pane {
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.rich-pane {
+  padding-bottom: 32px;
+}
+
+.source-pane {
+  /* Pinned to the viewport: the rich pane and the source pane share the body
+     scroll container, so without this any scroll-sync of the rich pane would
+     drag the textarea (and the caret) off screen while typing. */
+  position: sticky;
+  top: var(--mdpro-toolbar-height, 0px);
+  align-self: start;
+  z-index: 1;
+  height: calc(100vh - var(--mdpro-toolbar-height, 0px));
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.25));
+  background: var(--vscode-textCodeBlock-background, rgba(128,128,128,.06));
+}
+
+.source-pane.hidden {
+  display: none;
+}
+
+/* Drag handle straddling the border between the rich pane and the code view.
+   The code view is the right-hand column, so dragging left widens it. */
+.source-resize {
+  position: absolute;
+  top: 0;
+  left: -3px;
+  width: 7px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+  z-index: 2;
+  background: transparent;
+  transition: background 120ms ease;
+}
+
+.source-resize:hover,
+.source-resize.dragging {
+  background: var(--vscode-sash-hoverBorder, var(--vscode-focusBorder, rgba(0,122,204,.4)));
+}
+
+/* While dragging, keep the cursor consistent and stop the panes from
+   selecting text under the pointer. */
+body.mdpro-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.source-pane-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.2));
+  color: var(--vscode-editor-foreground);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.source-pane-hint {
+  color: var(--vscode-descriptionForeground);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.source-input {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  overflow: auto;
+  padding: 14px 16px 32px;
+  border: 0;
+  outline: 0;
+  resize: none;
+  box-sizing: border-box;
+  background: transparent;
+  color: var(--vscode-editor-foreground);
+  font-family: var(--vscode-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", monospace);
+  font-size: calc(var(--mdpro-font-size, 14px) - 1px);
+  line-height: var(--mdpro-line-height, 1.6);
+  tab-size: 2;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  overflow-x: hidden;
+}
+
+.source-input:focus-visible {
+  box-shadow: inset 2px 0 var(--vscode-focusBorder);
+}
+
+.mdpro-synced-block {
+  outline: 1px solid var(--vscode-focusBorder, var(--vscode-textLink-foreground));
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+@media (max-width: 760px) {
+  body.source-visible .split-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .source-pane {
+    position: static;
+    height: 42vh;
+    min-height: 42vh;
+    border-top: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.25));
+    border-left: 0;
+  }
+
+  .source-input {
+    height: auto;
+  }
+
+  .source-resize {
+    display: none;
+  }
+
+  .source-pane-hint {
+    display: none;
+  }
+}
+
 #frontmatter-panel {
   max-width: var(--mdpro-content-width, none);
   margin: 10px auto 12px;
@@ -283,7 +427,8 @@ body {
   min-width: 8px;
 }
 
-#toolbar button.toolbar-outline-btn {
+#toolbar button.toolbar-outline-btn,
+#toolbar button.toolbar-source-btn {
   width: auto;
   min-width: 72px;
   padding: 0 10px;
@@ -295,17 +440,20 @@ body {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
-#toolbar button.toolbar-outline-btn:hover {
+#toolbar button.toolbar-outline-btn:hover,
+#toolbar button.toolbar-source-btn:hover {
   background: color-mix(in srgb, var(--vscode-button-secondaryHoverBackground, rgba(128,128,128,.24)) 88%, transparent);
 }
 
-#toolbar button.toolbar-outline-btn.active {
+#toolbar button.toolbar-outline-btn.active,
+#toolbar button.toolbar-source-btn.active {
   background: color-mix(in srgb, var(--vscode-button-background, var(--vscode-focusBorder, rgba(0,122,204,.35))) 28%, var(--vscode-button-secondaryBackground, rgba(128,128,128,.18)));
   border-color: color-mix(in srgb, var(--vscode-button-background, var(--vscode-focusBorder, rgba(0,122,204,.45))) 45%, transparent);
   color: var(--vscode-button-foreground, var(--vscode-editor-foreground));
 }
 
-#toolbar button.toolbar-outline-btn.active:hover {
+#toolbar button.toolbar-outline-btn.active:hover,
+#toolbar button.toolbar-source-btn.active:hover {
   background: color-mix(in srgb, var(--vscode-button-hoverBackground, var(--vscode-button-background, rgba(0,122,204,.45))) 34%, var(--vscode-button-secondaryHoverBackground, rgba(128,128,128,.24)));
 }
 

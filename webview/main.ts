@@ -102,6 +102,16 @@ function applyContentWidth(contentWidth: number): void {
 }
 
 /**
+ * Publish the toolbar's rendered height as a CSS variable so the sticky
+ * source pane can park itself directly underneath it.
+ */
+function updateToolbarHeightVar(): void {
+  const toolbar = document.getElementById("toolbar");
+  const height = toolbar && toolbar.style.display !== "none" ? toolbar.offsetHeight : 0;
+  document.documentElement.style.setProperty("--mdpro-toolbar-height", `${height}px`);
+}
+
+/**
  * Show or hide the formatting toolbar.
  */
 function applyShowToolbar(show: boolean): void {
@@ -109,6 +119,7 @@ function applyShowToolbar(show: boolean): void {
   if (toolbar) {
     toolbar.style.display = show ? "" : "none";
   }
+  updateToolbarHeightVar();
 }
 
 function updateOutlineButtonState(show: boolean): void {
@@ -117,6 +128,32 @@ function updateOutlineButtonState(show: boolean): void {
   button.classList.toggle("active", show);
   button.setAttribute("aria-pressed", String(show));
   button.title = show ? "Hide outline" : "Show outline";
+}
+
+function updateSourceButtonState(show: boolean): void {
+  const button = document.querySelector<HTMLButtonElement>("#toolbar .toolbar-source-btn");
+  if (!button) return;
+  button.classList.toggle("active", show);
+  button.setAttribute("aria-pressed", String(show));
+  button.title = show ? "Hide code view" : "Show code view";
+}
+
+function isSourcePaneVisible(): boolean {
+  const pane = document.getElementById("source-pane");
+  return Boolean(pane && !pane.classList.contains("hidden"));
+}
+
+/**
+ * Show or hide the raw Markdown source pane. When hidden the split grid
+ * collapses to a single column so the rich editor uses the full width.
+ */
+function applyShowSource(show: boolean): void {
+  const pane = document.getElementById("source-pane");
+  if (pane) {
+    pane.classList.toggle("hidden", !show);
+  }
+  document.body.classList.toggle("source-visible", show);
+  updateSourceButtonState(show);
 }
 
 /**
@@ -1045,6 +1082,14 @@ const toolbarItems: ToolbarItem[] = [
   { kind: "spacer" },
   {
     kind: "button",
+    icon: "code",
+    tooltip: "Toggle code view",
+    label: "Code",
+    className: "toolbar-source-btn",
+    action: () => toggleSource(),
+  },
+  {
+    kind: "button",
     icon: "outline",
     tooltip: "Toggle outline",
     label: "Outline",
@@ -1153,6 +1198,13 @@ function toggleOutline(): void {
   applyShowOutline(outline.classList.contains("hidden"));
 }
 
+/** Toggle the raw Markdown source pane. Used by the toolbar code button. */
+function toggleSource(): void {
+  const pane = document.getElementById("source-pane");
+  if (!pane) return;
+  applyShowSource(pane.classList.contains("hidden"));
+}
+
 // Wrap in async IIFE — esbuild IIFE format does not support top-level await.
 (async () => {
   // -------------------------------------------------------------------
@@ -1171,12 +1223,61 @@ function toggleOutline(): void {
   let hasTrailingNewline = false;
   let hasPendingUserChange = false;
   let sourceMarkdown = "";
+  let hasPendingSourceChange = false;
+  let pendingSourceToRichUpdate = false;
+  let pendingSourceToRichReset: ReturnType<typeof setTimeout> | null = null;
+  let sourceToRichTimer: ReturnType<typeof setTimeout> | null = null;
+  let syncingSourceScroll = false;
+  let syncedBlock: HTMLElement | null = null;
+  let lastSourceInputTime = 0;
 
   const DEBOUNCE_TYPING = 150;
   const DEBOUNCE_IDLE = 50;
+  /**
+   * How long to wait after the last source-pane keystroke before rebuilding the
+   * rich pane. Rebuilding tears down and recreates the whole ProseMirror
+   * document, so doing it on every keystroke makes the editor look like it is
+   * constantly refreshing while typing.
+   */
+  const DEBOUNCE_SOURCE_TO_RICH = 400;
+  /**
+   * Window after a source-pane keystroke during which the source textarea is
+   * treated as the sole authority for the document text, so nothing may write
+   * back into it or scroll-sync off its own typing-induced scrolling.
+   */
+  const SOURCE_AUTHORITY_WINDOW = 1000;
+
+  function isSourceEditingActive(): boolean {
+    if (!sourceInput) return false;
+    return (
+      document.activeElement === sourceInput ||
+      Date.now() - lastSourceInputTime < SOURCE_AUTHORITY_WINDOW
+    );
+  }
 
   const frontmatterInput = document.getElementById("frontmatter-input") as HTMLTextAreaElement | null;
   const editorRoot = document.getElementById("editor");
+  const sourceInput = document.getElementById("source-input") as HTMLTextAreaElement | null;
+
+  function setSourceValuePreservingEditorState(value: string): void {
+    if (!sourceInput || sourceInput.value === value) return;
+    const hadFocus = document.activeElement === sourceInput;
+    const selectionStart = sourceInput.selectionStart;
+    const selectionEnd = sourceInput.selectionEnd;
+    const selectionDirection = sourceInput.selectionDirection;
+    const scrollTop = sourceInput.scrollTop;
+    const scrollLeft = sourceInput.scrollLeft;
+
+    sourceInput.value = value;
+    sourceInput.setSelectionRange(
+      Math.min(selectionStart, value.length),
+      Math.min(selectionEnd, value.length),
+      selectionDirection,
+    );
+    sourceInput.scrollTop = scrollTop;
+    sourceInput.scrollLeft = scrollLeft;
+    if (hadFocus) sourceInput.focus({ preventScroll: true });
+  }
 
   function markUserInitiatedChange(): void {
     hasPendingUserChange = true;
@@ -1200,6 +1301,43 @@ function toggleOutline(): void {
     debounceTimer = null;
   }
 
+  function commitDocumentSync(): void {
+    if (!hasPendingUserChange) {
+      return;
+    }
+
+    hasPendingUserChange = false;
+    const isSourceEdit = hasPendingSourceChange;
+    const serializedMarkdown = isSourceEdit
+      ? sourceInput?.value ?? sourceMarkdown
+      : serializeCurrentDocument(currentBodyMarkdown);
+    hasPendingSourceChange = false;
+
+    // Skip posting if the serialized output is identical to the source —
+    // this prevents silent modifications when no real edit was made.
+    if (!isSourceEdit && serializedMarkdown === sourceMarkdown) {
+      return;
+    }
+
+    currentVersion++;
+    vscode.postMessage({
+      type: "edit",
+      markdown: serializedMarkdown,
+      version: currentVersion,
+    });
+    sourceMarkdown = serializedMarkdown;
+  }
+
+  /**
+   * Send any debounced edit immediately. Used when the webview loses focus or
+   * is hidden: cancelling instead would silently drop the last keystrokes, and
+   * the next `update` from the extension host would then wipe them out.
+   */
+  function flushDocumentSync(): void {
+    cancelDocumentSync();
+    commitDocumentSync();
+  }
+
   function scheduleDocumentSync(): void {
     const now = Date.now();
     const timeSinceLastEdit = now - lastEditTime;
@@ -1212,30 +1350,144 @@ function toggleOutline(): void {
     debounceTimer = setTimeout(() => {
       debounceTimer = null;
 
-      if (document.visibilityState !== "visible" || !document.hasFocus()) {
+      if (document.visibilityState !== "visible") {
         return;
       }
 
-      if (!hasPendingUserChange) {
-        return;
-      }
-
-      hasPendingUserChange = false;
-      const serializedMarkdown = serializeCurrentDocument(currentBodyMarkdown);
-
-      // Skip posting if the serialized output is identical to the source —
-      // this prevents silent modifications when no real edit was made.
-      if (serializedMarkdown === sourceMarkdown) {
-        return;
-      }
-
-      currentVersion++;
-      vscode.postMessage({
-        type: "edit",
-        markdown: serializedMarkdown,
-        version: currentVersion,
-      });
+      commitDocumentSync();
     }, delay);
+  }
+
+  interface SourceBlock {
+    start: number;
+    end: number;
+  }
+
+  /** Map source lines to top-level Markdown blocks for cross-pane navigation. */
+  function getSourceBlocks(markdown: string): SourceBlock[] {
+    const lines = markdown.split(/\r?\n/);
+    const blocks: SourceBlock[] = [];
+    let start = -1;
+    let inFence = false;
+
+    for (let line = 0; line < lines.length; line++) {
+      if (/^\s*(```|~~~)/.test(lines[line])) inFence = !inFence;
+      if (lines[line].trim() && start === -1) start = line;
+      const nextIsBlank = line === lines.length - 1 || !lines[line + 1].trim();
+      if (start !== -1 && !inFence && nextIsBlank) {
+        blocks.push({ start, end: line });
+        start = -1;
+      }
+    }
+
+    return blocks.length ? blocks : [{ start: 0, end: Math.max(0, lines.length - 1) }];
+  }
+
+  function getRichBlocks(): HTMLElement[] {
+    const root = document.querySelector<HTMLElement>(".milkdown .ProseMirror");
+    if (!root) return [];
+    return Array.from(root.children).filter((element): element is HTMLElement => element instanceof HTMLElement);
+  }
+
+  function lineForOffset(text: string, offset: number): number {
+    return text.slice(0, offset).split(/\r?\n/).length - 1;
+  }
+
+  let charWidthCacheKey = "";
+  let charWidthCacheValue = 0;
+
+  /** Width of one character in the (monospace) source textarea, memoized. */
+  function measureSourceCharWidth(style: CSSStyleDeclaration): number {
+    const key = `${style.fontSize} ${style.fontFamily}`;
+    if (key === charWidthCacheKey && charWidthCacheValue > 0) return charWidthCacheValue;
+    const context = document.createElement("canvas").getContext("2d");
+    if (!context) return 8;
+    context.font = `${style.fontSize} ${style.fontFamily}`;
+    const width = context.measureText("0".repeat(64)).width / 64;
+    if (width > 0) {
+      charWidthCacheKey = key;
+      charWidthCacheValue = width;
+    }
+    return width || 8;
+  }
+
+  /**
+   * The source textarea soft-wraps, so one logical line can span several
+   * visual rows. Scroll sync has to work in rows, not lines.
+   */
+  function sourceRowMetrics(): { rowHeight: number; charsPerRow: number } | null {
+    if (!sourceInput) return null;
+    const style = getComputedStyle(sourceInput);
+    const rowHeight = parseFloat(style.lineHeight) || 20;
+    const usableWidth =
+      sourceInput.clientWidth -
+      (parseFloat(style.paddingLeft) || 0) -
+      (parseFloat(style.paddingRight) || 0);
+    const charsPerRow = Math.max(1, Math.floor(usableWidth / measureSourceCharWidth(style)));
+    return { rowHeight, charsPerRow };
+  }
+
+  function rowsBeforeLine(text: string, line: number, charsPerRow: number): number {
+    const lines = text.split(/\r?\n/);
+    let rows = 0;
+    for (let index = 0; index < Math.min(line, lines.length); index++) {
+      rows += Math.max(1, Math.ceil(lines[index].length / charsPerRow));
+    }
+    return rows;
+  }
+
+  function lineForRow(text: string, row: number, charsPerRow: number): number {
+    const lines = text.split(/\r?\n/);
+    let rows = 0;
+    for (let index = 0; index < lines.length; index++) {
+      rows += Math.max(1, Math.ceil(lines[index].length / charsPerRow));
+      if (rows > row) return index;
+    }
+    return Math.max(0, lines.length - 1);
+  }
+
+  function blockIndexForLine(line: number): number {
+    const blocks = getSourceBlocks(sourceInput?.value ?? sourceMarkdown);
+    const exact = blocks.findIndex((block) => line >= block.start && line <= block.end);
+    if (exact >= 0) return exact;
+    return blocks.reduce((nearest, block, index) =>
+      Math.abs(block.start - line) < Math.abs(blocks[nearest].start - line) ? index : nearest, 0);
+  }
+
+  function setSyncedRichBlock(index: number, shouldScroll: boolean): void {
+    const blocks = getRichBlocks();
+    const block = blocks[Math.min(index, Math.max(0, blocks.length - 1))];
+    syncedBlock?.classList.remove("mdpro-synced-block");
+    syncedBlock = block ?? null;
+    block?.classList.add("mdpro-synced-block");
+    if (shouldScroll) block?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+
+  function syncRichFromSource(shouldScroll: boolean): void {
+    if (!sourceInput) return;
+    setSyncedRichBlock(blockIndexForLine(lineForOffset(sourceInput.value, sourceInput.selectionStart)), shouldScroll);
+  }
+
+  function syncSourceFromRich(target: EventTarget | null): void {
+    if (!sourceInput || !isSourcePaneVisible()) return;
+    const block = (target as HTMLElement | null)?.closest<HTMLElement>(".ProseMirror > *");
+    const index = getRichBlocks().indexOf(block!);
+    if (index < 0) return;
+    const blocks = getSourceBlocks(sourceInput.value);
+    const sourceBlock = blocks[Math.min(index, blocks.length - 1)];
+    if (!sourceBlock) return;
+
+    // Scroll the source pane to the matching block, but never move focus or
+    // the selection there — the user clicked in the rich pane and must keep
+    // typing there.
+    const metrics = sourceRowMetrics();
+    if (!metrics) return;
+    const blockTop =
+      rowsBeforeLine(sourceInput.value, sourceBlock.start, metrics.charsPerRow) * metrics.rowHeight;
+    syncingSourceScroll = true;
+    sourceInput.scrollTop = Math.max(0, blockTop - sourceInput.clientHeight / 2);
+    requestAnimationFrame(() => { syncingSourceScroll = false; });
+    setSyncedRichBlock(index, false);
   }
 
   // -------------------------------------------------------------------
@@ -1250,6 +1502,8 @@ function toggleOutline(): void {
 
   const OUTLINE_MIN_WIDTH = 160;
   const OUTLINE_STORAGE_KEY = "markdownPro.outlineWidth";
+  const SOURCE_MIN_WIDTH = 240;
+  const SOURCE_STORAGE_KEY = "markdownPro.sourceWidth";
 
   /**
    * Build the outline from the rendered editor DOM. Doing this from the DOM
@@ -1401,6 +1655,65 @@ function toggleOutline(): void {
     });
   }
 
+  /**
+   * Make the border between the rich pane and the code view draggable.
+   * The code view is the right-hand grid column, so its width is stored in
+   * `--mdpro-source-width` and moving the pointer left widens it.
+   */
+  function initSourceResize(): void {
+    const handle = document.getElementById("source-resize");
+    const pane = document.getElementById("source-pane");
+    if (!handle || !pane) return;
+
+    const maxWidth = () => Math.max(SOURCE_MIN_WIDTH, window.innerWidth - 320);
+
+    const clamp = (width: number) =>
+      Math.min(maxWidth(), Math.max(SOURCE_MIN_WIDTH, width));
+
+    // Restore persisted width.
+    try {
+      const saved = parseInt(window.localStorage.getItem(SOURCE_STORAGE_KEY) ?? "", 10);
+      if (Number.isFinite(saved)) {
+        document.documentElement.style.setProperty("--mdpro-source-width", `${clamp(saved)}px`);
+      }
+    } catch { /* localStorage may be unavailable; fall back to default */ }
+
+    let startX = 0;
+    let startWidth = 0;
+
+    const onMove = (e: PointerEvent) => {
+      const next = clamp(startWidth + (startX - e.clientX));
+      document.documentElement.style.setProperty("--mdpro-source-width", `${next}px`);
+    };
+
+    const onUp = (e: PointerEvent) => {
+      handle.classList.remove("dragging");
+      document.body.classList.remove("mdpro-resizing");
+      handle.releasePointerCapture?.(e.pointerId);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      const current = Math.round(pane.getBoundingClientRect().width);
+      try { window.localStorage.setItem(SOURCE_STORAGE_KEY, String(current)); } catch { /* ignore */ }
+    };
+
+    handle.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      startX = e.clientX;
+      startWidth = pane.getBoundingClientRect().width;
+      handle.classList.add("dragging");
+      document.body.classList.add("mdpro-resizing");
+      handle.setPointerCapture?.(e.pointerId);
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    });
+
+    // Double-click resets to the default split.
+    handle.addEventListener("dblclick", () => {
+      document.documentElement.style.removeProperty("--mdpro-source-width");
+      try { window.localStorage.removeItem(SOURCE_STORAGE_KEY); } catch { /* ignore */ }
+    });
+  }
+
   // -------------------------------------------------------------------
   // Milkdown Crepe initialisation
   // -------------------------------------------------------------------
@@ -1449,11 +1762,19 @@ function toggleOutline(): void {
 
   buildToolbar(crepe, markUserInitiatedChange);
 
+  // Keep --mdpro-toolbar-height in sync (the toolbar wraps at narrow widths).
+  updateToolbarHeightVar();
+  const toolbarEl = document.getElementById("toolbar");
+  if (toolbarEl && typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(updateToolbarHeightVar).observe(toolbarEl);
+  }
+
   // Initialise the search bar
   initSearchBar();
 
   // Initialise the outline sidebar (resize handle + click-to-scroll).
   initOutlineResize();
+  initSourceResize();
   attachOutlineClicks();
   attachOutlineClose();
   // Reserve layout space for the outline so it doesn't overlay editor content
@@ -1461,6 +1782,8 @@ function toggleOutline(): void {
   // appear under the outline and rapidly toggle).
   const outlineEl = document.getElementById("outline");
   applyShowOutline(Boolean(outlineEl && !outlineEl.classList.contains("hidden")));
+  // The code view starts hidden; `init` re-applies the persisted setting.
+  applyShowSource(false);
   requestAnimationFrame(() => scheduleOutlineRebuild());
 
   if (frontmatterInput) {
@@ -1469,6 +1792,80 @@ function toggleOutline(): void {
       currentFrontmatter = frontmatterInput.value;
       autoSizeFrontmatterInput(frontmatterInput);
       scheduleDocumentSync();
+    });
+  }
+
+  if (sourceInput) {
+    sourceInput.addEventListener("input", () => {
+      lastSourceInputTime = Date.now();
+      const markdown = sourceInput.value;
+      currentEol = detectLineEnding(markdown);
+      hasTrailingNewline = markdown.endsWith("\n");
+      sourceMarkdown = markdown;
+      const parsedDocument = splitMarkdownDocument(markdown);
+      currentFrontmatter = parsedDocument.frontmatter;
+      currentBodyMarkdown = parsedDocument.body;
+      renderFrontmatterPanel(currentFrontmatter);
+
+      // Never serialize source-pane edits through Milkdown: this is the
+      // escape hatch for directives, HTML, custom syntax, and other Markdown
+      // a WYSIWYG schema cannot represent without changing it. Rendering the
+      // rich pane waits until typing pauses, so the native textarea keeps its
+      // cursor and scroll position while the user is actively editing.
+      if (sourceToRichTimer) clearTimeout(sourceToRichTimer);
+      sourceToRichTimer = setTimeout(() => {
+        sourceToRichTimer = null;
+        // Milkdown reports `markdownUpdated` asynchronously. Do not let that
+        // echo write a normalized value back into this textarea.
+        pendingSourceToRichUpdate = true;
+        if (pendingSourceToRichReset) clearTimeout(pendingSourceToRichReset);
+        pendingSourceToRichReset = setTimeout(() => {
+          pendingSourceToRichUpdate = false;
+          pendingSourceToRichReset = null;
+        }, 500);
+        const hadFocus = document.activeElement === sourceInput;
+        const selectionStart = sourceInput.selectionStart;
+        const selectionEnd = sourceInput.selectionEnd;
+        const selectionDirection = sourceInput.selectionDirection;
+        const scrollTop = sourceInput.scrollTop;
+        const scrollLeft = sourceInput.scrollLeft;
+        suppressOnChange = true;
+        crepe.editor.action(replaceAll(currentBodyMarkdown));
+        requestAnimationFrame(() => {
+          suppressOnChange = false;
+          if (!hadFocus) return;
+          // `replaceAll` rebuilds the ProseMirror document and can steal
+          // focus, so put the caret back exactly where the user left it.
+          sourceInput.focus({ preventScroll: true });
+          sourceInput.setSelectionRange(
+            Math.min(selectionStart, sourceInput.value.length),
+            Math.min(selectionEnd, sourceInput.value.length),
+            selectionDirection,
+          );
+          sourceInput.scrollTop = scrollTop;
+          sourceInput.scrollLeft = scrollLeft;
+        });
+      }, DEBOUNCE_SOURCE_TO_RICH);
+      hasPendingSourceChange = true;
+      markUserInitiatedChange();
+      syncRichFromSource(false);
+      scheduleOutlineRebuild();
+      scheduleDocumentSync();
+    });
+
+    sourceInput.addEventListener("click", () => syncRichFromSource(true));
+    sourceInput.addEventListener("keyup", () => syncRichFromSource(false));
+    sourceInput.addEventListener("select", () => syncRichFromSource(false));
+    sourceInput.addEventListener("scroll", () => {
+      // Typing near the bottom of the textarea makes the browser scroll it
+      // automatically. Treating that as a user scroll would scroll-sync the
+      // rich pane and yank the view away mid-keystroke.
+      if (syncingSourceScroll || isSourceEditingActive()) return;
+      const metrics = sourceRowMetrics();
+      if (!metrics) return;
+      const topRow = Math.floor(sourceInput.scrollTop / metrics.rowHeight);
+      const visibleLine = lineForRow(sourceInput.value, topRow, metrics.charsPerRow);
+      setSyncedRichBlock(blockIndexForLine(visibleLine), true);
     });
   }
 
@@ -1486,11 +1883,14 @@ function toggleOutline(): void {
   editorRoot?.addEventListener("drop", () => {
     markUserInitiatedChange();
   }, true);
+  editorRoot?.addEventListener("click", (event) => {
+    syncSourceFromRich(event.target);
+  });
 
-  window.addEventListener("blur", cancelDocumentSync);
+  window.addEventListener("blur", flushDocumentSync);
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "visible") {
-      cancelDocumentSync();
+      flushDocumentSync();
     }
   });
 
@@ -1508,9 +1908,33 @@ function toggleOutline(): void {
 
   crepe.on((listener: any) => {
     listener.markdownUpdated((_ctx: any, markdown: string, prevMarkdown: string) => {
-      if (suppressOnChange || markdown === prevMarkdown) return;
+      if (suppressOnChange || markdown === prevMarkdown) {
+        if (suppressOnChange && pendingSourceToRichUpdate) {
+          pendingSourceToRichUpdate = false;
+          if (pendingSourceToRichReset) clearTimeout(pendingSourceToRichReset);
+          pendingSourceToRichReset = null;
+        }
+        return;
+      }
+
+      if (pendingSourceToRichUpdate) {
+        pendingSourceToRichUpdate = false;
+        if (pendingSourceToRichReset) clearTimeout(pendingSourceToRichReset);
+        pendingSourceToRichReset = null;
+        return;
+      }
+
+      // A delayed Milkdown callback from `replaceAll` can arrive after the
+      // short suppression window. While the source pane is being edited it is
+      // always authoritative, so never echo rich output back into it.
+      if (isSourceEditingActive()) {
+        return;
+      }
 
       currentBodyMarkdown = markdown;
+      if (sourceInput) {
+        setSourceValuePreservingEditorState(serializeCurrentDocument(markdown));
+      }
       scheduleOutlineRebuild();
       scheduleDocumentSync();
     });
@@ -1521,15 +1945,22 @@ function toggleOutline(): void {
   // -------------------------------------------------------------------
 
   window.addEventListener("message", (event) => {
-    const { type, markdown, version, theme, fontSize, lineHeight, fontFamily, contentWidth, showToolbar, showOutline } = event.data;
+    const { type, markdown, version, theme, fontSize, lineHeight, fontFamily, contentWidth, showToolbar, showOutline, showSource } = event.data;
 
     if ((type === "init" || type === "update") && typeof markdown === "string" && version > currentVersion) {
       cancelDocumentSync();
+      if (sourceToRichTimer) {
+        clearTimeout(sourceToRichTimer);
+        sourceToRichTimer = null;
+      }
       currentVersion = version;
       hasPendingUserChange = false;
       currentEol = detectLineEnding(markdown);
       hasTrailingNewline = markdown.endsWith("\n");
       sourceMarkdown = normalizeMarkdownForStorage(markdown, currentEol, hasTrailingNewline);
+      if (sourceInput) {
+        setSourceValuePreservingEditorState(markdown);
+      }
 
       // Detect the formatting style used in the source document and update
       // remark-stringify options to match, so the serializer preserves the
@@ -1558,6 +1989,7 @@ function toggleOutline(): void {
         if (typeof contentWidth === "number") applyContentWidth(contentWidth);
         if (typeof showToolbar === "boolean") applyShowToolbar(showToolbar);
         if (typeof showOutline === "boolean") applyShowOutline(showOutline);
+        applyShowSource(showSource === true);
       }
 
       const parsedDocument = splitMarkdownDocument(markdown);
@@ -1605,6 +2037,10 @@ function toggleOutline(): void {
 
     if (type === "showOutlineChange" && typeof showOutline === "boolean") {
       applyShowOutline(showOutline);
+    }
+
+    if (type === "showSourceChange" && typeof showSource === "boolean") {
+      applyShowSource(showSource);
     }
 
     if (type === "toggleSearch") {
