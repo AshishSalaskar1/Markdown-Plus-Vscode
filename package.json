@@ -2,7 +2,7 @@
   "name": "markdown-pro",
   "displayName": "Markdown Pro",
   "description": "WYSIWYG markdown editor for VS Code",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "publisher": "ashishsalaskar",
   "icon": "Markdown_Plus_Logo_v2.png",
   "license": "MIT",
@@ -195,7 +195,17 @@
             "cobalt2",
             "one-light",
             "ayu-light",
-            "flexoki-light"
+            "flexoki-light",
+            "night-owl",
+            "ayu-dark",
+            "catppuccin-macchiato",
+            "rose-pine-moon",
+            "kanagawa-wave",
+            "light-owl",
+            "quiet-light",
+            "papercolor-light",
+            "material-lighter",
+            "tokyo-night-day"
           ],
           "enumItemLabels": [
             "VS Code (match editor theme)",
@@ -220,7 +230,17 @@
             "Cobalt2",
             "One Light",
             "Ayu Light",
-            "Flexoki Light"
+            "Flexoki Light",
+            "Night Owl",
+            "Ayu Dark",
+            "Catppuccin Macchiato",
+            "Rosé Pine Moon",
+            "Kanagawa Wave",
+            "Light Owl",
+            "Quiet Light",
+            "PaperColor Light",
+            "Material Lighter",
+            "Tokyo Night Day"
           ],
           "markdownDescription": "Color theme for the Markdown Pro WYSIWYG editor. Select `VS Code` to inherit your current editor theme, or choose a standalone theme."
         },
@@ -281,18 +301,22 @@
     }
   },
   "scripts": {
+    "test": "playwright test",
     "build": "node esbuild.config.mjs",
     "watch": "node esbuild.config.mjs --watch",
     "vscode:prepublish": "node esbuild.config.mjs --production",
     "package": "npx @vscode/vsce package"
   },
   "dependencies": {
+    "@codemirror/language": "^6.12.2",
+    "@lezer/highlight": "^1.2.3",
     "@milkdown/core": "^7.18.0",
     "@milkdown/crepe": "^7.18.0",
     "@milkdown/ctx": "^7.18.0",
     "mermaid": "^11.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@types/node": "^25.3.3",
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^3.7.1",

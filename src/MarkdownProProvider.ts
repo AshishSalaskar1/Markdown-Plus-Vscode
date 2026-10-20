@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getWebviewHtml } from './utils/html';
 import { broadcastTheme, getActiveTheme } from './themes';
+import { computeTextChange } from './utils/text-change';
 
 /** Read the persisted font size from configuration. */
 export function getActiveFontSize(): number {
@@ -135,9 +136,9 @@ export function broadcastShowSource(
  *
  * Bidirectional sync between the VS Code TextDocument and the webview uses
  * a triple-guard strategy to prevent infinite edit loops:
- *   1. `pendingEdits` — counter that tracks in-flight WorkspaceEdits so
- *      the document-change listener skips the events *we* triggered.
- *      A counter (not a boolean) handles overlapping applyEdit calls.
+ *   1. `pendingEdits` — expected-content tickets for in-flight WorkspaceEdits,
+ *      so only matching events are treated as our own, including overlapping
+ *      edits. Rejected edits must not swallow a later external change.
  *   2. `lastSentContent` — content-equality check to suppress no-op
  *      round-trips when undo/redo or external edits produce identical text.
  *   3. `currentVersion` — monotonically increasing version so stale
@@ -244,12 +245,19 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
     }
 
     // --- Triple-guard sync state ---
-    let pendingEdits = 0;
+    interface PendingEdit {
+      markdown: string;
+      timer?: ReturnType<typeof setTimeout>;
+    }
+    const pendingEdits = new Set<PendingEdit>();
+    function discardPendingEdit(edit: PendingEdit): void {
+      clearTimeout(edit.timer);
+      pendingEdits.delete(edit);
+    }
     let currentVersion = 0;
     let lastSentContent = document.getText();
     /** Helper: post the current document text to the webview. */
-    function sendToWebview(type: 'init' | 'update'): void {
-      const markdown = document.getText();
+    function sendToWebview(type: 'init' | 'update', markdown = document.getText()): void {
       lastSentContent = markdown;
       currentVersion++;
       webviewPanel.webview.postMessage({
@@ -263,24 +271,26 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
     const docChangeSubscription = vscode.workspace.onDidChangeTextDocument(
       (e) => {
         // Only react to changes in *our* document.
-        if (e.document !== document) {
+        if (e.document !== document || e.contentChanges.length === 0) {
           return;
         }
 
-        // Guard 1: skip events we triggered ourselves (counter handles
-        // overlapping applyEdit calls from rapid webview edits).
-        if (pendingEdits > 0) {
-          pendingEdits--;
-          return;
+        const newText = document.getText();
+        // Guard 1: ignore only a matching edit, not an unrelated external
+        // update that happens to arrive while applyEdit is in flight.
+        for (const pending of pendingEdits) {
+          if (pending.markdown === newText) {
+            discardPendingEdit(pending);
+            return;
+          }
         }
 
         // Guard 2: skip if content hasn't actually changed.
-        const newText = document.getText();
         if (newText === lastSentContent) {
           return;
         }
 
-        sendToWebview('update');
+        sendToWebview('update', newText);
       },
     );
 
@@ -289,7 +299,7 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
 
     // --- Webview → Document sync ---
     const messageSubscription = webviewPanel.webview.onDidReceiveMessage(
-      async (msg: { type: string; markdown?: string; version?: number }) => {
+      async (msg: { type: string; markdown?: string; version?: number; flush?: boolean }) => {
         switch (msg.type) {
           case 'ready': {
             // Batch all initial state into a single message to reduce
@@ -314,18 +324,18 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
           }
 
           case 'edit': {
-            const { markdown, version } = msg as {
-              markdown: string;
-              version: number;
-            };
+            const { markdown, version } = msg;
+            if (typeof markdown !== 'string' || typeof version !== 'number' ||
+                !Number.isSafeInteger(version) || version < 0) return;
 
-            // Ignore delayed messages from retained/background webviews.
-            if (!webviewPanel.visible || !webviewPanel.active) {
+            // A blur/visibility flush may reach us after VS Code switches tabs.
+            // Only explicit final flushes may cross that inactive-panel boundary.
+            if ((!webviewPanel.visible || !webviewPanel.active) && msg.flush !== true) {
               return;
             }
 
             // Guard 3: discard stale messages.
-            if (version < currentVersion) {
+            if (version <= currentVersion) {
               return;
             }
 
@@ -334,22 +344,38 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
             currentVersion = version;
 
             // Extra safety: no-op if content is identical.
-            if (markdown === document.getText()) {
-              return;
-            }
+            const previous = document.getText();
+            const change = computeTextChange(previous, markdown);
+            if (!change) return;
 
             const edit = new vscode.WorkspaceEdit();
             edit.replace(
               document.uri,
-              new vscode.Range(0, 0, document.lineCount, 0),
-              markdown,
+              new vscode.Range(document.positionAt(change.start), document.positionAt(change.end)),
+              change.text,
             );
 
-            // Guard 1: increment pending-edit counter so our doc-change
-            // listener skips the resulting event.
-            pendingEdits++;
+            const pending: PendingEdit = { markdown };
+            pendingEdits.add(pending);
             lastSentContent = markdown;
-            await vscode.workspace.applyEdit(edit);
+            let applied = false;
+            try {
+              applied = await vscode.workspace.applyEdit(edit);
+            } catch {
+              // Both a false result and a thrown error use the recovery below.
+            }
+            if (!applied) {
+              discardPendingEdit(pending);
+              if (version === currentVersion) lastSentContent = document.getText();
+              // Do not overwrite the webview's unsaved draft on failure.
+              void vscode.window.showErrorMessage(
+                'Markdown Pro could not apply your changes to the document. Your edited text remains in the editor. Check that the file is writable and try editing again.',
+              );
+            } else if (pendingEdits.has(pending)) {
+              // Allow a delayed change notification, but bound retention if
+              // VS Code normalized the edit or emitted no matching event.
+              pending.timer = setTimeout(() => discardPendingEdit(pending), 1_000);
+            }
             break;
           }
         }
@@ -359,6 +385,7 @@ export class MarkdownProEditorProvider implements vscode.CustomTextEditorProvide
     // --- Cleanup ---
     webviewPanel.onDidDispose(() => {
       this.activePanels.delete(webviewPanel);
+      for (const pending of pendingEdits) discardPendingEdit(pending);
       docChangeSubscription.dispose();
       messageSubscription.dispose();
     });

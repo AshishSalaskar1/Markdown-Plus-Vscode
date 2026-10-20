@@ -3,6 +3,8 @@ node_modules/
 
 # Build output
 dist/
+test-results/
+playwright-report/
 
 # Packaged extension
 *.vsix

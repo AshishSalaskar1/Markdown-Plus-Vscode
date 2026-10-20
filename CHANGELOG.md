@@ -4,6 +4,30 @@ All notable changes to the **Markdown Pro** extension will be documented in this
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.9.1] - 2026-10-20
+
+### Added
+
+* **Editable Mermaid previews** with an EDIT/DONE toggle, automatic Markdown sync, and a live diagram preview that preserves the caret and zoom/pan state.
+* Five dark palettes: Night Owl, Ayu Dark, Catppuccin Macchiato, Rosé Pine Moon, and Kanagawa Wave.
+* Five light palettes: Light Owl, Quiet Light, PaperColor Light, Material Lighter, and Tokyo Night Day.
+* Automated browser, theme-contrast, document-sync, and extension-provider regression tests.
+
+### Changed
+
+* Load Mermaid, diagram implementations, code-language modules, and fonts on demand to reduce startup work.
+* Batch zoom, pan, resizing, and source-scroll updates; reuse source-navigation indexes and avoid unnecessary hidden-panel updates.
+* Serialize rich edits after typing settles and apply minimal document replacements rather than replacing the entire file.
+* Refine all 32 custom palettes with readable headings, coordinated syntax highlighting, and consistent source/outline controls; VS Code mode continues to inherit light, dark, and high-contrast host colors.
+
+### Fixed
+
+* Valid Mermaid diagrams hitting default rendering limits are no longer reported as invalid syntax; actual errors are shown while the last valid diagram remains visible.
+* Theme colors survive editor rebuilds; links no longer become white/invisible on light backgrounds, and hover/link-editor popup states remain readable.
+* Table-cell and row edits, task-checkbox clicks, Tab/Shift+Tab navigation, and rapid table-cell selection synchronize without stale-transaction errors.
+* Final edits survive source/rich-pane and editor-tab focus handoffs; stale, malformed, concurrent, or failed document updates no longer suppress subsequent synchronization.
+* Untouched Markdown is not rewritten on blur, and frontmatter-only edits preserve unsupported body syntax byte-for-byte without a serializer round-trip.
+
 ## [0.9.0] - 2026-07-26
 
 ### Added
@@ -130,4 +154,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 * Font size commands: increase, decrease, and reset.
 * LaTeX math rendering (inline and block) via KaTeX.
 * Table editing with toolbar controls for rows, columns, and alignment.
-

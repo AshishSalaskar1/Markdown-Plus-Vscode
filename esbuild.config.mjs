@@ -1,4 +1,5 @@
 import * as esbuild from "esbuild";
+import { rm } from "node:fs/promises";
 
 const isWatch = process.argv.includes("--watch");
 const isProduction = process.argv.includes("--production");
@@ -17,18 +18,21 @@ const extensionConfig = {
 
 /** @type {import('esbuild').BuildOptions} */
 const webviewConfig = {
-  entryPoints: ["webview/main.ts"],
-  outfile: "dist/webview.js",
+  entryPoints: { webview: "webview/main.ts" },
+  outdir: "dist",
   platform: "browser",
-  format: "iife",
+  format: "esm",
+  splitting: true,
+  chunkNames: "chunks/[name]-[hash]",
+  assetNames: "assets/[name]-[hash]",
   bundle: true,
   minify: isProduction,
   sourcemap: !isProduction,
   loader: {
     ".css": "css",
-    ".woff2": "dataurl",
-    ".woff": "dataurl",
-    ".ttf": "dataurl",
+    ".woff2": "file",
+    ".woff": "file",
+    ".ttf": "file",
   },
   define: {
     "process.env.NODE_ENV": isProduction ? '"production"' : '"development"',
@@ -44,6 +48,11 @@ async function build() {
     await Promise.all([extCtx.watch(), webviewCtx.watch()]);
     console.log("[watch] Build started — watching for changes...");
   } else {
+    // Hashed chunks/assets from earlier builds must not accumulate in a VSIX.
+    await Promise.all([
+      rm("dist/chunks", { recursive: true, force: true }),
+      rm("dist/assets", { recursive: true, force: true }),
+    ]);
     await Promise.all([
       esbuild.build(extensionConfig),
       esbuild.build(webviewConfig),

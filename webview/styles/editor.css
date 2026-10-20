@@ -48,6 +48,14 @@ html {
   height: 100%;
 }
 
+body:is(.vscode-dark, .vscode-high-contrast):not([data-theme]) {
+  color-scheme: dark;
+}
+
+body:is(.vscode-light, .vscode-high-contrast-light):not([data-theme]) {
+  color-scheme: light;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -640,27 +648,27 @@ body.mdpro-resizing {
 }
 
 /* --- Custom themes: elevated surface with visible contrast --- */
-.milkdown[data-theme] .milkdown-toolbar {
+body[data-theme] .milkdown .milkdown-toolbar {
   background: color-mix(in srgb, var(--crepe-color-surface) 85%, var(--crepe-color-on-surface) 15%) !important;
   border: 1px solid var(--crepe-color-outline) !important;
   box-shadow: var(--crepe-shadow-2) !important;
 }
 
-.milkdown[data-theme] .milkdown-toolbar .toolbar-item svg {
+body[data-theme] .milkdown .milkdown-toolbar .toolbar-item svg {
   color: var(--crepe-color-on-surface) !important;
   fill: var(--crepe-color-on-surface) !important;
 }
 
-.milkdown[data-theme] .milkdown-toolbar .toolbar-item:hover {
+body[data-theme] .milkdown .milkdown-toolbar .toolbar-item:hover {
   background: var(--crepe-color-hover) !important;
 }
 
-.milkdown[data-theme] .milkdown-toolbar .toolbar-item.active svg {
+body[data-theme] .milkdown .milkdown-toolbar .toolbar-item.active svg {
   color: var(--crepe-color-primary) !important;
   fill: var(--crepe-color-primary) !important;
 }
 
-.milkdown[data-theme] .milkdown-toolbar .divider {
+body[data-theme] .milkdown .milkdown-toolbar .divider {
   background: var(--crepe-color-outline) !important;
 }
 
@@ -673,7 +681,7 @@ body.mdpro-resizing {
 }
 
 /* ---------------------------------------------------------
-   7. Headings — VS Code markdown preview sizes & weight
+   7. Headings — readable Markdown hierarchy at every level
    --------------------------------------------------------- */
 
 .milkdown .ProseMirror h1,
@@ -684,8 +692,8 @@ body.mdpro-resizing {
 .milkdown .ProseMirror h6 {
   font-family: var(--mdpro-font-family, var(--vscode-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif)) !important;
   font-weight: 600 !important;
-  color: var(--vscode-editor-foreground);
-  line-height: 1.25 !important;
+  color: var(--mdpro-heading-color, var(--vscode-editor-foreground));
+  line-height: 1.3 !important;
   padding: 0 !important;
   /* Offset for the sticky toolbar so that scrollIntoView() from the outline
      doesn't land the heading under the toolbar. */
@@ -694,10 +702,14 @@ body.mdpro-resizing {
 
 .milkdown .ProseMirror h1 {
   font-size: 2em !important;
-  margin-top: 0 !important;
+  margin-top: 1em !important;
   margin-bottom: var(--mdpro-block-gap-lg) !important;
   padding-bottom: 0.3em !important;
   border-bottom: 1px solid var(--vscode-editorWidget-border, rgba(128,128,128,.2));
+}
+
+.milkdown .ProseMirror > :first-child:is(h1, h2, h3, h4, h5, h6) {
+  margin-top: 0 !important;
 }
 
 .milkdown .ProseMirror h2 {
@@ -715,22 +727,21 @@ body.mdpro-resizing {
 }
 
 .milkdown .ProseMirror h4 {
-  font-size: 1em !important;
+  font-size: 1.125em !important;
   margin-top: var(--mdpro-heading-gap) !important;
   margin-bottom: var(--mdpro-heading-gap-tight) !important;
 }
 
 .milkdown .ProseMirror h5 {
-  font-size: 0.875em !important;
+  font-size: 1em !important;
   margin-top: var(--mdpro-heading-gap) !important;
   margin-bottom: var(--mdpro-heading-gap-tight) !important;
 }
 
 .milkdown .ProseMirror h6 {
-  font-size: 0.85em !important;
+  font-size: 0.95em !important;
   margin-top: var(--mdpro-heading-gap) !important;
   margin-bottom: var(--mdpro-heading-gap-tight) !important;
-  color: var(--vscode-descriptionForeground, var(--vscode-editor-foreground));
 }
 
 /* ---------------------------------------------------------
@@ -748,14 +759,49 @@ body.mdpro-resizing {
    9. Links
    --------------------------------------------------------- */
 
-.milkdown .ProseMirror a {
-  color: var(--vscode-textLink-foreground) !important;
-  text-decoration: none !important;
+.milkdown .ProseMirror a,
+.milkdown .ProseMirror a:visited {
+  color: var(--vscode-textLink-foreground, var(--crepe-color-primary, #0969da)) !important;
+  text-decoration: underline !important;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.15em;
 }
 
 .milkdown .ProseMirror a:hover {
-  color: var(--vscode-textLink-activeForeground, var(--vscode-textLink-foreground)) !important;
+  /* A host's hover accent can be white even on a light reading surface.
+     Keep the readable link color instead of switching to an untested accent. */
+  color: var(--vscode-textLink-foreground, var(--crepe-color-primary, #0969da)) !important;
   text-decoration: underline !important;
+}
+
+.milkdown .ProseMirror a:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder, var(--crepe-color-primary));
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Link popups are outside ProseMirror. Give their URL, input, and action icons
+   explicit surface colors instead of inheriting a foreground or border tint. */
+.milkdown :is(.milkdown-link-preview, .milkdown-link-edit) > :is(.link-preview, .link-edit) {
+  color: var(--crepe-color-on-surface);
+  background: var(--crepe-color-surface);
+  border: 1px solid var(--crepe-color-outline);
+}
+
+.milkdown .milkdown-link-preview .link-display {
+  color: var(--crepe-color-primary) !important;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.milkdown .milkdown-link-edit .input-area {
+  color: var(--crepe-color-on-surface) !important;
+  caret-color: currentColor;
+}
+
+.milkdown :is(.milkdown-link-preview, .milkdown-link-edit) :is(.link-icon, .button) svg {
+  color: var(--crepe-color-on-surface-variant) !important;
+  fill: currentColor !important;
 }
 
 /* ---------------------------------------------------------
@@ -787,12 +833,38 @@ body.mdpro-resizing {
 
 .milkdown .milkdown-code-block .cm-editor {
   background: transparent !important;
+  color: var(--crepe-color-on-surface) !important;
+  caret-color: var(--crepe-color-on-surface) !important;
   font-family: var(--vscode-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", monospace) !important;
   font-size: var(--vscode-editor-font-size, 14px) !important;
 }
 
 .milkdown .milkdown-code-block .cm-editor .cm-content {
   font-family: var(--vscode-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", monospace) !important;
+}
+
+/* Language highlighting shares the reading palette instead of a permanently
+   dark CodeMirror theme. No editor reconfiguration is needed on theme changes. */
+.milkdown .cm-content :is(.tok-keyword, .tok-operator, .tok-typeName, .tok-className, .tok-propertyName) {
+  color: var(--mdpro-syntax-keyword, var(--crepe-color-primary));
+}
+
+.milkdown .cm-content :is(.tok-string, .tok-string2, .tok-regexp, .tok-inserted) {
+  color: var(--mdpro-syntax-string, var(--crepe-color-inline-code));
+}
+
+.milkdown .cm-content :is(.tok-number, .tok-bool, .tok-atom, .tok-literal) {
+  color: var(--mdpro-syntax-number, var(--mdpro-heading-color, var(--crepe-color-primary)));
+}
+
+.milkdown .cm-content :is(.tok-comment, .tok-meta) {
+  color: var(--crepe-color-on-surface-variant);
+  font-style: italic;
+}
+
+.milkdown .cm-content :is(.tok-invalid, .tok-deleted) {
+  color: var(--crepe-color-error);
+  text-decoration: underline wavy;
 }
 
 .milkdown .milkdown-code-block .cm-gutters {
@@ -804,6 +876,20 @@ body.mdpro-resizing {
 .milkdown .milkdown-code-block .cm-activeLineGutter,
 .milkdown .milkdown-code-block .cm-activeLine {
   background: transparent !important;
+}
+
+.milkdown .milkdown-code-block :is(.cm-cursor, .cm-dropCursor) {
+  border-left-color: var(--crepe-color-on-surface) !important;
+}
+
+.milkdown .milkdown-code-block .cm-selectionBackground {
+  background: var(--crepe-color-selected) !important;
+}
+
+.milkdown .milkdown-code-block .cm-tooltip {
+  color: var(--crepe-color-on-surface);
+  background: var(--crepe-color-surface);
+  border-color: var(--crepe-color-outline);
 }
 
 /* Pre blocks (fallback / non-CodeMirror code) */
@@ -1050,6 +1136,48 @@ body.mdpro-resizing {
 
 /* ---- Mermaid Viewer (zoom / pan shell) ---- */
 
+/* Reuse Milkdown's existing CodeMirror instance instead of mounting a second
+   editor inside the SVG preview. Its document/undo bridge remains authoritative. */
+.milkdown .mermaid-block > .codemirror-host {
+  display: none !important;
+}
+
+.milkdown .mermaid-block .preview-toggle-button,
+.milkdown .mermaid-block > .preview-panel > .preview-divider,
+.milkdown .mermaid-block > .preview-panel > .preview-label {
+  display: none;
+}
+
+.milkdown .mermaid-block.mermaid-editing {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.milkdown .mermaid-block.mermaid-editing > .tools {
+  grid-column: 1 / -1;
+}
+
+.milkdown .mermaid-block.mermaid-editing > .codemirror-host {
+  display: block !important;
+  min-width: 0;
+  align-self: start;
+}
+
+.milkdown .mermaid-block.mermaid-editing > .codemirror-host .cm-scroller {
+  max-height: 480px;
+  overflow: auto;
+}
+
+.milkdown .mermaid-block > .preview-panel {
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .milkdown .mermaid-block.mermaid-editing {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .mermaid-viewer {
   display: flex;
   flex-direction: column;
@@ -1090,6 +1218,32 @@ body.mdpro-resizing {
   background: var(--vscode-toolbar-activeBackground, rgba(128,128,128,.25));
 }
 
+.mermaid-btn[hidden] {
+  display: none;
+}
+
+.mermaid-edit-btn {
+  width: auto;
+  margin-left: auto;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.mermaid-btn:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder, #007fd4);
+  outline-offset: 2px;
+}
+
+.mermaid-status:empty {
+  display: none;
+}
+
+.mermaid-status:not(:empty) {
+  font-size: 12px;
+  padding: 4px;
+}
+
 .mermaid-btn svg {
   width: 14px;
   height: 14px;
@@ -1109,6 +1263,8 @@ body.mdpro-resizing {
   position: relative;
   min-height: 72px;
   cursor: grab;
+  touch-action: none;
+  user-select: none;
 }
 
 .mermaid-canvas:active {
@@ -1122,6 +1278,7 @@ body.mdpro-resizing {
   align-items: center;
   padding: 10px;
   will-change: transform;
+  transition: none;
 }
 
 .mermaid-content svg {
@@ -1143,7 +1300,9 @@ body.mdpro-resizing {
   font-size: 13px;
   font-style: italic;
   padding: 8px 12px;
-  text-align: center;
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   user-select: text;
 }
 
@@ -1265,7 +1424,7 @@ body.outline-visible {
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.4;
-  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+  transition: background 120ms ease, border-color 120ms ease;
 }
 
 .outline-item:hover {
@@ -1291,26 +1450,26 @@ body.outline-visible {
 .outline-item.outline-level-3 {
   font-size: 12px;
   font-weight: 500;
-  color: color-mix(in srgb, var(--vscode-editor-foreground) 92%, transparent);
+  color: var(--vscode-editor-foreground);
 }
 
 .outline-item.outline-level-4 {
   font-size: 11.5px;
   font-weight: 400;
-  color: color-mix(in srgb, var(--vscode-editor-foreground) 82%, transparent);
+  color: var(--vscode-editor-foreground);
 }
 
 .outline-item.outline-level-5 {
   font-size: 11px;
   font-weight: 400;
-  color: color-mix(in srgb, var(--vscode-editor-foreground) 72%, transparent);
+  color: var(--vscode-editor-foreground);
 }
 
 .outline-item.outline-level-6 {
   font-size: 11px;
   font-weight: 400;
   font-style: italic;
-  color: color-mix(in srgb, var(--vscode-editor-foreground) 65%, transparent);
+  color: var(--vscode-editor-foreground);
 }
 
 .outline-item:focus {

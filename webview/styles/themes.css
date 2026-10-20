@@ -1,13 +1,80 @@
 /* ============================================================
    Markdown Pro — Theme Definitions
-   Each theme overrides Crepe design tokens via data-theme
-   attribute selectors. The default "vscode" theme uses the
+   The body's data-theme is the stable source of truth, including
+   when Milkdown remounts its editor wrapper. The "vscode" theme uses the
    existing --vscode-* mappings in editor.css (no data-theme).
    ============================================================ */
 
+/* Keep the whole editing surface on one palette. These aliases are scoped to
+   custom themes only; switching to VS Code restores its original host tokens.
+   Accent hues follow the named palettes, with readable text variants where a
+   syntax-comment or decorative accent would be too faint for Markdown. */
+body[data-theme] {
+  background: var(--crepe-color-background) !important;
+  color: var(--crepe-color-on-background) !important;
+  color-scheme: dark;
+  --vscode-editor-background: var(--crepe-color-background);
+  --vscode-editor-foreground: var(--crepe-color-on-background);
+  --vscode-descriptionForeground: var(--crepe-color-on-surface-variant);
+  --vscode-textCodeBlock-background: var(--crepe-color-inline-area);
+  --vscode-textBlockQuote-background: var(--crepe-color-surface);
+  --vscode-textBlockQuote-border: var(--crepe-color-primary);
+  --vscode-textLink-foreground: var(--crepe-color-primary);
+  --vscode-textLink-activeForeground: var(--crepe-color-primary);
+  --vscode-editorCursor-foreground: var(--crepe-color-on-background);
+  --vscode-editorLineNumber-foreground: var(--crepe-color-on-surface-variant);
+  --vscode-editor-selectionBackground: var(--crepe-color-selected);
+  --vscode-editorWidget-background: var(--crepe-color-surface);
+  --vscode-editorWidget-border: var(--crepe-color-outline);
+  --vscode-editorHoverWidget-background: var(--crepe-color-surface);
+  --vscode-editorHoverWidget-border: var(--crepe-color-outline);
+  --vscode-editorHoverWidget-foreground: var(--crepe-color-on-surface);
+  --vscode-icon-foreground: var(--crepe-color-on-surface);
+  --vscode-input-background: var(--crepe-color-surface-low);
+  --vscode-input-foreground: var(--crepe-color-on-surface);
+  --vscode-input-border: var(--crepe-color-outline);
+  --vscode-input-placeholderForeground: var(--crepe-color-on-surface-variant);
+  --vscode-inputOption-activeBackground: var(--crepe-color-selected);
+  --vscode-inputOption-activeBorder: var(--crepe-color-primary);
+  --vscode-inputOption-activeForeground: var(--crepe-color-on-surface);
+  --vscode-focusBorder: var(--crepe-color-primary);
+  --vscode-list-hoverBackground: var(--crepe-color-hover);
+  --vscode-menu-background: var(--crepe-color-surface);
+  --vscode-dropdown-background: var(--crepe-color-surface);
+  --vscode-dropdown-border: var(--crepe-color-outline);
+  --vscode-sideBarSectionHeader-foreground: var(--crepe-color-on-surface);
+  --vscode-toolbar-hoverBackground: var(--crepe-color-hover);
+  --vscode-toolbar-activeBackground: var(--crepe-color-selected);
+  --vscode-button-background: var(--crepe-color-primary);
+  --vscode-button-foreground: var(--crepe-color-background);
+  --vscode-button-border: var(--crepe-color-outline);
+  --vscode-button-hoverBackground: var(--crepe-color-primary);
+  --vscode-button-secondaryBackground: var(--crepe-color-surface);
+  --vscode-button-secondaryForeground: var(--crepe-color-on-surface);
+  --vscode-button-secondaryHoverBackground: var(--crepe-color-hover);
+  --vscode-sash-hoverBorder: var(--crepe-color-primary);
+  --vscode-errorForeground: var(--crepe-color-error);
+  --vscode-inputValidation-errorBorder: var(--crepe-color-error);
+  --vscode-inputValidation-errorBackground: var(--crepe-color-surface);
+}
+
+body:is([data-theme="github-light"], [data-theme="solarized-light"],
+  [data-theme="gruvbox-light"], [data-theme="catppuccin-latte"],
+  [data-theme="rose-pine-dawn"], [data-theme="one-light"],
+  [data-theme="ayu-light"], [data-theme="flexoki-light"],
+  [data-theme="light-owl"], [data-theme="quiet-light"],
+  [data-theme="papercolor-light"], [data-theme="material-lighter"],
+  [data-theme="tokyo-night-day"]) {
+  color-scheme: light;
+}
+
 /* ---- GitHub Light ---- */
 body[data-theme="github-light"],
-.milkdown[data-theme="github-light"] {
+body[data-theme="github-light"] .milkdown {
+  --mdpro-heading-color: #1f2328;
+  --mdpro-syntax-keyword: #cf222e;
+  --mdpro-syntax-string: #0a3069;
+  --mdpro-syntax-number: #0550ae;
   --crepe-color-background: #ffffff;
   --crepe-color-on-background: #1f2328;
   --crepe-color-surface: #f6f8fa;
@@ -36,7 +103,11 @@ body[data-theme="github-light"] {
 
 /* ---- GitHub Dark ---- */
 body[data-theme="github-dark"],
-.milkdown[data-theme="github-dark"] {
+body[data-theme="github-dark"] .milkdown {
+  --mdpro-heading-color: #f0f6fc;
+  --mdpro-syntax-keyword: #ff7b72;
+  --mdpro-syntax-string: #a5d6ff;
+  --mdpro-syntax-number: #79c0ff;
   --crepe-color-background: #0d1117;
   --crepe-color-on-background: #e6edf3;
   --crepe-color-surface: #161b22;
@@ -65,13 +136,17 @@ body[data-theme="github-dark"] {
 
 /* ---- Dracula ---- */
 body[data-theme="dracula"],
-.milkdown[data-theme="dracula"] {
+body[data-theme="dracula"] .milkdown {
+  --mdpro-heading-color: #bd93f9;
+  --mdpro-syntax-keyword: #ff79c6;
+  --mdpro-syntax-string: #f1fa8c;
+  --mdpro-syntax-number: #ffb86c;
   --crepe-color-background: #282a36;
   --crepe-color-on-background: #f8f8f2;
   --crepe-color-surface: #343746;
   --crepe-color-surface-low: #21222c;
   --crepe-color-on-surface: #f8f8f2;
-  --crepe-color-on-surface-variant: #6272a4;
+  --crepe-color-on-surface-variant: #9aa7cf;
   --crepe-color-outline: #44475a;
   --crepe-color-primary: #bd93f9;
   --crepe-color-secondary: #44475a;
@@ -94,13 +169,17 @@ body[data-theme="dracula"] {
 
 /* ---- Nord ---- */
 body[data-theme="nord"],
-.milkdown[data-theme="nord"] {
+body[data-theme="nord"] .milkdown {
+  --mdpro-heading-color: #eceff4;
+  --mdpro-syntax-keyword: #88c0d0;
+  --mdpro-syntax-string: #a3be8c;
+  --mdpro-syntax-number: #d8dee9;
   --crepe-color-background: #2e3440;
   --crepe-color-on-background: #d8dee9;
   --crepe-color-surface: #3b4252;
   --crepe-color-surface-low: #2e3440;
   --crepe-color-on-surface: #d8dee9;
-  --crepe-color-on-surface-variant: #81a1c1;
+  --crepe-color-on-surface-variant: #a5b4cb;
   --crepe-color-outline: #4c566a;
   --crepe-color-primary: #88c0d0;
   --crepe-color-secondary: #434c5e;
@@ -123,20 +202,24 @@ body[data-theme="nord"] {
 
 /* ---- Solarized Light ---- */
 body[data-theme="solarized-light"],
-.milkdown[data-theme="solarized-light"] {
+body[data-theme="solarized-light"] .milkdown {
+  --mdpro-heading-color: #073642;
+  --mdpro-syntax-keyword: #006da3;
+  --mdpro-syntax-string: #526900;
+  --mdpro-syntax-number: #9c2364;
   --crepe-color-background: #fdf6e3;
-  --crepe-color-on-background: #657b83;
+  --crepe-color-on-background: #52686f;
   --crepe-color-surface: #eee8d5;
   --crepe-color-surface-low: #fdf6e3;
-  --crepe-color-on-surface: #657b83;
-  --crepe-color-on-surface-variant: #93a1a1;
+  --crepe-color-on-surface: #52686f;
+  --crepe-color-on-surface-variant: #52686f;
   --crepe-color-outline: #d3cbb7;
-  --crepe-color-primary: #268bd2;
+  --crepe-color-primary: #006da3;
   --crepe-color-secondary: #eee8d5;
-  --crepe-color-on-secondary: #586e75;
+  --crepe-color-on-secondary: #52686f;
   --crepe-color-inverse: #073642;
   --crepe-color-on-inverse: #fdf6e3;
-  --crepe-color-inline-code: #d33682;
+  --crepe-color-inline-code: #9c2364;
   --crepe-color-error: #dc322f;
   --crepe-color-hover: rgba(238, 232, 213, 0.6);
   --crepe-color-selected: rgba(38, 139, 210, 0.12);
@@ -147,25 +230,29 @@ body[data-theme="solarized-light"],
 
 body[data-theme="solarized-light"] {
   background: #fdf6e3 !important;
-  color: #657b83 !important;
+  color: #52686f !important;
 }
 
 /* ---- Solarized Dark ---- */
 body[data-theme="solarized-dark"],
-.milkdown[data-theme="solarized-dark"] {
+body[data-theme="solarized-dark"] .milkdown {
+  --mdpro-heading-color: #eee8d5;
+  --mdpro-syntax-keyword: #6cafe0;
+  --mdpro-syntax-string: #b2be5c;
+  --mdpro-syntax-number: #e57eb1;
   --crepe-color-background: #002b36;
-  --crepe-color-on-background: #839496;
+  --crepe-color-on-background: #93a1a1;
   --crepe-color-surface: #073642;
   --crepe-color-surface-low: #002b36;
-  --crepe-color-on-surface: #839496;
-  --crepe-color-on-surface-variant: #586e75;
+  --crepe-color-on-surface: #93a1a1;
+  --crepe-color-on-surface-variant: #93a1a1;
   --crepe-color-outline: #2a4e57;
-  --crepe-color-primary: #268bd2;
+  --crepe-color-primary: #6cafe0;
   --crepe-color-secondary: #073642;
-  --crepe-color-on-secondary: #839496;
+  --crepe-color-on-secondary: #93a1a1;
   --crepe-color-inverse: #eee8d5;
   --crepe-color-on-inverse: #002b36;
-  --crepe-color-inline-code: #d33682;
+  --crepe-color-inline-code: #e57eb1;
   --crepe-color-error: #dc322f;
   --crepe-color-hover: rgba(7, 54, 66, 0.6);
   --crepe-color-selected: rgba(38, 139, 210, 0.2);
@@ -176,18 +263,22 @@ body[data-theme="solarized-dark"],
 
 body[data-theme="solarized-dark"] {
   background: #002b36 !important;
-  color: #839496 !important;
+  color: #93a1a1 !important;
 }
 
 /* ---- One Dark ---- */
 body[data-theme="one-dark"],
-.milkdown[data-theme="one-dark"] {
+body[data-theme="one-dark"] .milkdown {
+  --mdpro-heading-color: #e5c07b;
+  --mdpro-syntax-keyword: #c678dd;
+  --mdpro-syntax-string: #98c379;
+  --mdpro-syntax-number: #d19a66;
   --crepe-color-background: #282c34;
   --crepe-color-on-background: #abb2bf;
   --crepe-color-surface: #21252b;
   --crepe-color-surface-low: #282c34;
   --crepe-color-on-surface: #abb2bf;
-  --crepe-color-on-surface-variant: #5c6370;
+  --crepe-color-on-surface-variant: #929baa;
   --crepe-color-outline: #3e4451;
   --crepe-color-primary: #61afef;
   --crepe-color-secondary: #3e4451;
@@ -210,17 +301,21 @@ body[data-theme="one-dark"] {
 
 /* ---- Tokyo Night ---- */
 body[data-theme="tokyo-night"],
-.milkdown[data-theme="tokyo-night"] {
+body[data-theme="tokyo-night"] .milkdown {
+  --mdpro-heading-color: #bb9af7;
+  --mdpro-syntax-keyword: #bb9af7;
+  --mdpro-syntax-string: #9ece6a;
+  --mdpro-syntax-number: #ff9e64;
   --crepe-color-background: #1a1b26;
-  --crepe-color-on-background: #a9b1d6;
+  --crepe-color-on-background: #c0caf5;
   --crepe-color-surface: #24283b;
   --crepe-color-surface-low: #1a1b26;
-  --crepe-color-on-surface: #a9b1d6;
-  --crepe-color-on-surface-variant: #565f89;
+  --crepe-color-on-surface: #c0caf5;
+  --crepe-color-on-surface-variant: #9aa5ce;
   --crepe-color-outline: #3b4261;
   --crepe-color-primary: #7aa2f7;
   --crepe-color-secondary: #3b4261;
-  --crepe-color-on-secondary: #a9b1d6;
+  --crepe-color-on-secondary: #c0caf5;
   --crepe-color-inverse: #c0caf5;
   --crepe-color-on-inverse: #1a1b26;
   --crepe-color-inline-code: #bb9af7;
@@ -234,20 +329,24 @@ body[data-theme="tokyo-night"],
 
 body[data-theme="tokyo-night"] {
   background: #1a1b26 !important;
-  color: #a9b1d6 !important;
+  color: #c0caf5 !important;
 }
 
 /* ---- Gruvbox Light ---- */
 body[data-theme="gruvbox-light"],
-.milkdown[data-theme="gruvbox-light"] {
+body[data-theme="gruvbox-light"] .milkdown {
+  --mdpro-heading-color: #282828;
+  --mdpro-syntax-keyword: #9d0006;
+  --mdpro-syntax-string: #5b6500;
+  --mdpro-syntax-number: #8f3f71;
   --crepe-color-background: #fbf1c7;
   --crepe-color-on-background: #3c3836;
   --crepe-color-surface: #ebdbb2;
   --crepe-color-surface-low: #fbf1c7;
   --crepe-color-on-surface: #3c3836;
-  --crepe-color-on-surface-variant: #7c6f64;
+  --crepe-color-on-surface-variant: #665c54;
   --crepe-color-outline: #bdae93;
-  --crepe-color-primary: #d65d0e;
+  --crepe-color-primary: #9d3900;
   --crepe-color-secondary: #ebdbb2;
   --crepe-color-on-secondary: #3c3836;
   --crepe-color-inverse: #3c3836;
@@ -268,20 +367,24 @@ body[data-theme="gruvbox-light"] {
 
 /* ---- Gruvbox Dark ---- */
 body[data-theme="gruvbox-dark"],
-.milkdown[data-theme="gruvbox-dark"] {
+body[data-theme="gruvbox-dark"] .milkdown {
+  --mdpro-heading-color: #fabd2f;
+  --mdpro-syntax-keyword: #fe8019;
+  --mdpro-syntax-string: #b8bb26;
+  --mdpro-syntax-number: #e49bb0;
   --crepe-color-background: #282828;
   --crepe-color-on-background: #ebdbb2;
   --crepe-color-surface: #3c3836;
   --crepe-color-surface-low: #282828;
   --crepe-color-on-surface: #ebdbb2;
-  --crepe-color-on-surface-variant: #a89984;
+  --crepe-color-on-surface-variant: #bdae93;
   --crepe-color-outline: #504945;
-  --crepe-color-primary: #d65d0e;
+  --crepe-color-primary: #fe8019;
   --crepe-color-secondary: #504945;
   --crepe-color-on-secondary: #ebdbb2;
   --crepe-color-inverse: #ebdbb2;
   --crepe-color-on-inverse: #282828;
-  --crepe-color-inline-code: #fb4934;
+  --crepe-color-inline-code: #fe8019;
   --crepe-color-error: #fb4934;
   --crepe-color-hover: rgba(80, 73, 69, 0.5);
   --crepe-color-selected: rgba(214, 93, 14, 0.2);
@@ -297,7 +400,11 @@ body[data-theme="gruvbox-dark"] {
 
 /* ---- Catppuccin Mocha ---- */
 body[data-theme="catppuccin-mocha"],
-.milkdown[data-theme="catppuccin-mocha"] {
+body[data-theme="catppuccin-mocha"] .milkdown {
+  --mdpro-heading-color: #cba6f7;
+  --mdpro-syntax-keyword: #cba6f7;
+  --mdpro-syntax-string: #a6e3a1;
+  --mdpro-syntax-number: #fab387;
   --crepe-color-background: #1e1e2e;
   --crepe-color-on-background: #cdd6f4;
   --crepe-color-surface: #313244;
@@ -326,20 +433,24 @@ body[data-theme="catppuccin-mocha"] {
 
 /* ---- Catppuccin Latte ---- */
 body[data-theme="catppuccin-latte"],
-.milkdown[data-theme="catppuccin-latte"] {
+body[data-theme="catppuccin-latte"] .milkdown {
+  --mdpro-heading-color: #7b2cdb;
+  --mdpro-syntax-keyword: #7b2cdb;
+  --mdpro-syntax-string: #35751f;
+  --mdpro-syntax-number: #9b4800;
   --crepe-color-background: #eff1f5;
   --crepe-color-on-background: #4c4f69;
-  --crepe-color-surface: #ccd0da;
+  --crepe-color-surface: #e6e9ef;
   --crepe-color-surface-low: #e6e9ef;
   --crepe-color-on-surface: #4c4f69;
-  --crepe-color-on-surface-variant: #6c6f85;
+  --crepe-color-on-surface-variant: #5c5f77;
   --crepe-color-outline: #acb0be;
-  --crepe-color-primary: #1e66f5;
+  --crepe-color-primary: #1855d0;
   --crepe-color-secondary: #bcc0cc;
   --crepe-color-on-secondary: #4c4f69;
   --crepe-color-inverse: #4c4f69;
   --crepe-color-on-inverse: #eff1f5;
-  --crepe-color-inline-code: #8839ef;
+  --crepe-color-inline-code: #7b2cdb;
   --crepe-color-error: #d20f39;
   --crepe-color-hover: rgba(172, 176, 190, 0.4);
   --crepe-color-selected: rgba(30, 102, 245, 0.12);
@@ -355,13 +466,17 @@ body[data-theme="catppuccin-latte"] {
 
 /* ---- Rosé Pine ---- */
 body[data-theme="rose-pine"],
-.milkdown[data-theme="rose-pine"] {
+body[data-theme="rose-pine"] .milkdown {
+  --mdpro-heading-color: #ebbcba;
+  --mdpro-syntax-keyword: #c4a7e7;
+  --mdpro-syntax-string: #f6c177;
+  --mdpro-syntax-number: #ebbcba;
   --crepe-color-background: #191724;
   --crepe-color-on-background: #e0def4;
   --crepe-color-surface: #26233a;
   --crepe-color-surface-low: #1f1d2e;
   --crepe-color-on-surface: #e0def4;
-  --crepe-color-on-surface-variant: #908caa;
+  --crepe-color-on-surface-variant: #a39ebd;
   --crepe-color-outline: #524f67;
   --crepe-color-primary: #c4a7e7;
   --crepe-color-secondary: #403d52;
@@ -384,20 +499,24 @@ body[data-theme="rose-pine"] {
 
 /* ---- Rosé Pine Dawn ---- */
 body[data-theme="rose-pine-dawn"],
-.milkdown[data-theme="rose-pine-dawn"] {
+body[data-theme="rose-pine-dawn"] .milkdown {
+  --mdpro-heading-color: #286983;
+  --mdpro-syntax-keyword: #6f548b;
+  --mdpro-syntax-string: #8a5b13;
+  --mdpro-syntax-number: #9a455d;
   --crepe-color-background: #faf4ed;
   --crepe-color-on-background: #575279;
   --crepe-color-surface: #f2e9e1;
   --crepe-color-surface-low: #fffaf3;
   --crepe-color-on-surface: #575279;
-  --crepe-color-on-surface-variant: #797593;
+  --crepe-color-on-surface-variant: #696482;
   --crepe-color-outline: #cecacd;
-  --crepe-color-primary: #907aa9;
+  --crepe-color-primary: #6f548b;
   --crepe-color-secondary: #dfdad9;
   --crepe-color-on-secondary: #575279;
   --crepe-color-inverse: #575279;
   --crepe-color-on-inverse: #faf4ed;
-  --crepe-color-inline-code: #d7827e;
+  --crepe-color-inline-code: #9a455d;
   --crepe-color-error: #b4637a;
   --crepe-color-hover: rgba(206, 202, 205, 0.4);
   --crepe-color-selected: rgba(144, 122, 169, 0.12);
@@ -413,20 +532,24 @@ body[data-theme="rose-pine-dawn"] {
 
 /* ---- Monokai Pro ---- */
 body[data-theme="monokai-pro"],
-.milkdown[data-theme="monokai-pro"] {
+body[data-theme="monokai-pro"] .milkdown {
+  --mdpro-heading-color: #a9dc76;
+  --mdpro-syntax-keyword: #ff85a2;
+  --mdpro-syntax-string: #ffd866;
+  --mdpro-syntax-number: #b0a2f5;
   --crepe-color-background: #2d2a2e;
   --crepe-color-on-background: #fcfcfa;
   --crepe-color-surface: #403e41;
   --crepe-color-surface-low: #221f22;
   --crepe-color-on-surface: #fcfcfa;
-  --crepe-color-on-surface-variant: #939293;
+  --crepe-color-on-surface-variant: #b1adb4;
   --crepe-color-outline: #5b595c;
   --crepe-color-primary: #78dce8;
   --crepe-color-secondary: #403e41;
   --crepe-color-on-secondary: #fcfcfa;
   --crepe-color-inverse: #fcfcfa;
   --crepe-color-on-inverse: #2d2a2e;
-  --crepe-color-inline-code: #ab9df2;
+  --crepe-color-inline-code: #b0a2f5;
   --crepe-color-error: #ff6188;
   --crepe-color-hover: rgba(91, 89, 92, 0.5);
   --crepe-color-selected: rgba(120, 220, 232, 0.15);
@@ -442,20 +565,24 @@ body[data-theme="monokai-pro"] {
 
 /* ---- Everforest Dark ---- */
 body[data-theme="everforest-dark"],
-.milkdown[data-theme="everforest-dark"] {
+body[data-theme="everforest-dark"] .milkdown {
+  --mdpro-heading-color: #a7c080;
+  --mdpro-syntax-keyword: #8bc4bc;
+  --mdpro-syntax-string: #a7c080;
+  --mdpro-syntax-number: #e4add1;
   --crepe-color-background: #2d353b;
   --crepe-color-on-background: #d3c6aa;
   --crepe-color-surface: #3d484d;
   --crepe-color-surface-low: #232a2e;
   --crepe-color-on-surface: #d3c6aa;
-  --crepe-color-on-surface-variant: #9da9a0;
+  --crepe-color-on-surface-variant: #b0bdb3;
   --crepe-color-outline: #4f585e;
-  --crepe-color-primary: #7fbbb3;
+  --crepe-color-primary: #8bc4bc;
   --crepe-color-secondary: #343f44;
   --crepe-color-on-secondary: #d3c6aa;
   --crepe-color-inverse: #d3c6aa;
   --crepe-color-on-inverse: #2d353b;
-  --crepe-color-inline-code: #e69875;
+  --crepe-color-inline-code: #eeaa88;
   --crepe-color-error: #e67e80;
   --crepe-color-hover: rgba(79, 88, 94, 0.5);
   --crepe-color-selected: rgba(127, 187, 179, 0.15);
@@ -470,99 +597,83 @@ body[data-theme="everforest-dark"] {
 }
 
 /* ---- Heading border color overrides for non-vscode themes ---- */
-.milkdown[data-theme] .ProseMirror h1,
-.milkdown[data-theme] .ProseMirror h2 {
+body[data-theme] .milkdown .ProseMirror h1,
+body[data-theme] .milkdown .ProseMirror h2 {
   border-bottom-color: var(--crepe-color-outline) !important;
 }
 
 /* ---- Link colors for non-vscode themes ---- */
-.milkdown[data-theme] .ProseMirror a {
+body[data-theme] .milkdown .ProseMirror a {
   color: var(--crepe-color-primary) !important;
 }
 
 /* ---- Blockquote border for non-vscode themes ---- */
-.milkdown[data-theme] .ProseMirror blockquote::before {
-  background: var(--crepe-color-outline) !important;
+body[data-theme] .milkdown .ProseMirror blockquote::before {
+  background: var(--crepe-color-primary) !important;
 }
 
 /* ---- Table borders for non-vscode themes ---- */
-.milkdown[data-theme] th,
-.milkdown[data-theme] td {
+body[data-theme] .milkdown th,
+body[data-theme] .milkdown td {
   border-color: var(--crepe-color-outline) !important;
 }
 
-.milkdown[data-theme] th {
+body[data-theme] .milkdown th {
   background: var(--crepe-color-surface) !important;
 }
 
 /* ---- Selection for non-vscode themes ---- */
-.milkdown[data-theme] .ProseMirror *::selection {
+body[data-theme] .milkdown .ProseMirror *::selection {
   background: var(--crepe-color-selected) !important;
 }
 
 /* ---- HR for non-vscode themes ---- */
-.milkdown[data-theme] .ProseMirror hr {
+body[data-theme] .milkdown .ProseMirror hr {
   border-top-color: var(--crepe-color-outline) !important;
 }
 
 /* ---- Code blocks for non-vscode themes ---- */
-.milkdown[data-theme] .ProseMirror code {
+body[data-theme] .milkdown .ProseMirror code {
   color: var(--crepe-color-inline-code) !important;
   background: var(--crepe-color-inline-area) !important;
 }
 
-.milkdown[data-theme] .milkdown-code-block {
+body[data-theme] .milkdown .milkdown-code-block {
   background: var(--crepe-color-surface) !important;
 }
 
-.milkdown[data-theme] .milkdown-code-block .cm-gutters {
+body[data-theme] .milkdown .milkdown-code-block .cm-gutters {
   color: var(--crepe-color-on-surface-variant) !important;
 }
 
 /* ---- Inline code text in pre blocks for non-vscode themes ---- */
-.milkdown[data-theme] .ProseMirror pre {
+body[data-theme] .milkdown .ProseMirror pre {
   background: var(--crepe-color-surface) !important;
 }
 
-.milkdown[data-theme] .ProseMirror pre code {
+body[data-theme] .milkdown .ProseMirror pre code {
   color: var(--crepe-color-on-surface) !important;
   background: transparent !important;
 }
 
 /* ---- Blockquote background for non-vscode themes ---- */
-.milkdown[data-theme] .ProseMirror blockquote {
+body[data-theme] .milkdown .ProseMirror blockquote {
   background: var(--crepe-color-surface) !important;
 }
 
 /* ---- List marker / label color for non-vscode themes ---- */
-.milkdown[data-theme] .milkdown-list-item-block li .label-wrapper .label {
+body[data-theme] .milkdown .milkdown-list-item-block li .label-wrapper .label {
   color: var(--crepe-color-on-background) !important;
 }
 
-.milkdown[data-theme] .ProseMirror ol li::marker,
-.milkdown[data-theme] .ProseMirror ul li::marker {
+body[data-theme] .milkdown .ProseMirror ol li::marker,
+body[data-theme] .milkdown .ProseMirror ul li::marker {
   color: var(--crepe-color-on-background) !important;
 }
 
-/* ---- Heading color hierarchy for non-vscode themes ----
-   H1–H3 use the full on-background color so they are always
-   the most prominent elements. H4–H6 fade progressively. ---- */
-.milkdown[data-theme] .ProseMirror h1,
-.milkdown[data-theme] .ProseMirror h2,
-.milkdown[data-theme] .ProseMirror h3 {
-  color: var(--crepe-color-on-background) !important;
-}
-
-.milkdown[data-theme] .ProseMirror h4 {
-  color: color-mix(in srgb, var(--crepe-color-on-background) 82%, var(--crepe-color-background)) !important;
-}
-
-.milkdown[data-theme] .ProseMirror h5 {
-  color: color-mix(in srgb, var(--crepe-color-on-background) 68%, var(--crepe-color-background)) !important;
-}
-
-.milkdown[data-theme] .ProseMirror h6 {
-  color: var(--crepe-color-on-surface-variant) !important;
+/* Hierarchy comes from size, weight and spacing—not faded text. */
+body[data-theme] .milkdown .ProseMirror :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--mdpro-heading-color, var(--crepe-color-on-background)) !important;
 }
 
 /* ---- Outline panel for non-vscode themes ----
@@ -598,19 +709,19 @@ body[data-theme] .outline-item.outline-level-2 {
 }
 
 body[data-theme] .outline-item.outline-level-3 {
-  color: color-mix(in srgb, var(--crepe-color-on-surface) 88%, var(--crepe-color-background)) !important;
+  color: var(--crepe-color-on-surface) !important;
 }
 
 body[data-theme] .outline-item.outline-level-4 {
-  color: color-mix(in srgb, var(--crepe-color-on-surface) 75%, var(--crepe-color-background)) !important;
+  color: var(--crepe-color-on-surface) !important;
 }
 
 body[data-theme] .outline-item.outline-level-5 {
-  color: color-mix(in srgb, var(--crepe-color-on-surface) 62%, var(--crepe-color-background)) !important;
+  color: var(--crepe-color-on-surface) !important;
 }
 
 body[data-theme] .outline-item.outline-level-6 {
-  color: var(--crepe-color-on-surface-variant) !important;
+  color: var(--crepe-color-on-surface) !important;
 }
 
 body[data-theme] .outline-item:focus {
@@ -680,13 +791,17 @@ body[data-theme] #toolbar button.toolbar-outline-btn.active {
 
 /* ---- Material Ocean ---- */
 body[data-theme="material-ocean"],
-.milkdown[data-theme="material-ocean"] {
+body[data-theme="material-ocean"] .milkdown {
+  --mdpro-heading-color: #c792ea;
+  --mdpro-syntax-keyword: #c792ea;
+  --mdpro-syntax-string: #c3e88d;
+  --mdpro-syntax-number: #f78c6c;
   --crepe-color-background: #0F111A;
   --crepe-color-on-background: #8F93A2;
   --crepe-color-surface: #1A1C25;
   --crepe-color-surface-low: #090B12;
   --crepe-color-on-surface: #8F93A2;
-  --crepe-color-on-surface-variant: #464B5D;
+  --crepe-color-on-surface-variant: #8F93A2;
   --crepe-color-outline: #1F2233;
   --crepe-color-primary: #84FFFF;
   --crepe-color-secondary: #1A1C25;
@@ -709,13 +824,17 @@ body[data-theme="material-ocean"] {
 
 /* ---- Ayu Mirage ---- */
 body[data-theme="ayu-mirage"],
-.milkdown[data-theme="ayu-mirage"] {
+body[data-theme="ayu-mirage"] .milkdown {
+  --mdpro-heading-color: #ffd580;
+  --mdpro-syntax-keyword: #ffa759;
+  --mdpro-syntax-string: #d5ff80;
+  --mdpro-syntax-number: #dfbfff;
   --crepe-color-background: #1F2430;
   --crepe-color-on-background: #CBCCC6;
   --crepe-color-surface: #242936;
   --crepe-color-surface-low: #1A1F2B;
   --crepe-color-on-surface: #CBCCC6;
-  --crepe-color-on-surface-variant: #707A8C;
+  --crepe-color-on-surface-variant: #9BA5B7;
   --crepe-color-outline: #343D4F;
   --crepe-color-primary: #FFCC66;
   --crepe-color-secondary: #343D4F;
@@ -738,7 +857,11 @@ body[data-theme="ayu-mirage"] {
 
 /* ---- Cobalt2 ---- */
 body[data-theme="cobalt2"],
-.milkdown[data-theme="cobalt2"] {
+body[data-theme="cobalt2"] .milkdown {
+  --mdpro-heading-color: #ffc600;
+  --mdpro-syntax-keyword: #ff9d00;
+  --mdpro-syntax-string: #a5ff90;
+  --mdpro-syntax-number: #ffbedd;
   --crepe-color-background: #193549;
   --crepe-color-on-background: #FFFFFF;
   --crepe-color-surface: #1E3F5C;
@@ -771,20 +894,24 @@ body[data-theme="cobalt2"] {
 
 /* ---- One Light ---- */
 body[data-theme="one-light"],
-.milkdown[data-theme="one-light"] {
+body[data-theme="one-light"] .milkdown {
+  --mdpro-heading-color: #a626a4;
+  --mdpro-syntax-keyword: #a626a4;
+  --mdpro-syntax-string: #3b6f1c;
+  --mdpro-syntax-number: #885500;
   --crepe-color-background: #FAFAFA;
   --crepe-color-on-background: #383A42;
   --crepe-color-surface: #EBEBEB;
   --crepe-color-surface-low: #F5F5F5;
   --crepe-color-on-surface: #383A42;
-  --crepe-color-on-surface-variant: #9E9E9E;
+  --crepe-color-on-surface-variant: #626773;
   --crepe-color-outline: #D3D3D3;
-  --crepe-color-primary: #4078F2;
+  --crepe-color-primary: #2459C8;
   --crepe-color-secondary: #E5E5E5;
   --crepe-color-on-secondary: #383A42;
   --crepe-color-inverse: #383A42;
   --crepe-color-on-inverse: #FAFAFA;
-  --crepe-color-inline-code: #E45649;
+  --crepe-color-inline-code: #B52B35;
   --crepe-color-error: #E45649;
   --crepe-color-hover: rgba(211, 211, 211, 0.5);
   --crepe-color-selected: rgba(64, 120, 242, 0.12);
@@ -800,20 +927,24 @@ body[data-theme="one-light"] {
 
 /* ---- Ayu Light ---- */
 body[data-theme="ayu-light"],
-.milkdown[data-theme="ayu-light"] {
+body[data-theme="ayu-light"] .milkdown {
+  --mdpro-heading-color: #8f5500;
+  --mdpro-syntax-keyword: #a13d86;
+  --mdpro-syntax-string: #5b6f0b;
+  --mdpro-syntax-number: #945300;
   --crepe-color-background: #FAFAFA;
   --crepe-color-on-background: #5C6166;
   --crepe-color-surface: #F0F0F0;
   --crepe-color-surface-low: #F5F5F5;
   --crepe-color-on-surface: #5C6166;
-  --crepe-color-on-surface-variant: #8A9199;
+  --crepe-color-on-surface-variant: #676E77;
   --crepe-color-outline: #D8D8D8;
-  --crepe-color-primary: #F2890C;
+  --crepe-color-primary: #945300;
   --crepe-color-secondary: #EAF1FB;
   --crepe-color-on-secondary: #5C6166;
   --crepe-color-inverse: #5C6166;
   --crepe-color-on-inverse: #FAFAFA;
-  --crepe-color-inline-code: #E65050;
+  --crepe-color-inline-code: #B42F3B;
   --crepe-color-error: #E65050;
   --crepe-color-hover: rgba(216, 216, 216, 0.5);
   --crepe-color-selected: rgba(242, 137, 12, 0.12);
@@ -829,15 +960,19 @@ body[data-theme="ayu-light"] {
 
 /* ---- Flexoki Light ---- */
 body[data-theme="flexoki-light"],
-.milkdown[data-theme="flexoki-light"] {
+body[data-theme="flexoki-light"] .milkdown {
+  --mdpro-heading-color: #205ea6;
+  --mdpro-syntax-keyword: #803ea0;
+  --mdpro-syntax-string: #4d650d;
+  --mdpro-syntax-number: #ad4d0b;
   --crepe-color-background: #FFFCF0;
   --crepe-color-on-background: #100F0F;
   --crepe-color-surface: #F2F0E5;
   --crepe-color-surface-low: #FFFCF0;
   --crepe-color-on-surface: #100F0F;
-  --crepe-color-on-surface-variant: #6F6E69;
+  --crepe-color-on-surface-variant: #64635F;
   --crepe-color-outline: #DAD8CE;
-  --crepe-color-primary: #4385BE;
+  --crepe-color-primary: #205EA6;
   --crepe-color-secondary: #E6E4D9;
   --crepe-color-on-secondary: #100F0F;
   --crepe-color-inverse: #100F0F;
@@ -854,4 +989,200 @@ body[data-theme="flexoki-light"],
 body[data-theme="flexoki-light"] {
   background: #FFFCF0 !important;
   color: #100F0F !important;
+}
+
+/* Additional reading palettes share semantic surfaces; only the actual colors
+   differ. Keep this scoped so existing palette-specific surface choices stay
+   intact, and keep the Milkdown wrapper independent of theme attributes. */
+body:is([data-theme="night-owl"], [data-theme="ayu-dark"],
+  [data-theme="catppuccin-macchiato"], [data-theme="rose-pine-moon"],
+  [data-theme="kanagawa-wave"], [data-theme="light-owl"],
+  [data-theme="quiet-light"], [data-theme="papercolor-light"],
+  [data-theme="material-lighter"], [data-theme="tokyo-night-day"]),
+body:is([data-theme="night-owl"], [data-theme="ayu-dark"],
+  [data-theme="catppuccin-macchiato"], [data-theme="rose-pine-moon"],
+  [data-theme="kanagawa-wave"], [data-theme="light-owl"],
+  [data-theme="quiet-light"], [data-theme="papercolor-light"],
+  [data-theme="material-lighter"], [data-theme="tokyo-night-day"]) .milkdown {
+  --crepe-color-on-surface: var(--crepe-color-on-background);
+  --crepe-color-surface-low: var(--crepe-color-background);
+  --crepe-color-secondary: var(--crepe-color-surface);
+  --crepe-color-on-secondary: var(--crepe-color-on-background);
+  --crepe-color-inverse: var(--crepe-color-on-background);
+  --crepe-color-on-inverse: var(--crepe-color-background);
+  --crepe-color-inline-area: var(--crepe-color-surface);
+  --crepe-color-hover: color-mix(in srgb, var(--crepe-color-on-background) 9%, transparent);
+  --crepe-color-selected: color-mix(in srgb, var(--crepe-color-primary) 18%, transparent);
+  --crepe-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.15);
+  --crepe-shadow-2: 0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
+/* ---- Night Owl ---- */
+body[data-theme="night-owl"],
+body[data-theme="night-owl"] .milkdown {
+  --crepe-color-background: #011627;
+  --crepe-color-on-background: #d6deeb;
+  --crepe-color-surface: #0b253a;
+  --crepe-color-on-surface-variant: #9bb0c5;
+  --crepe-color-outline: #2c4b63;
+  --crepe-color-primary: #82aaff;
+  --crepe-color-inline-code: #7fdbca;
+  --crepe-color-error: #ff869a;
+  --mdpro-heading-color: #82b1ff;
+  --mdpro-syntax-keyword: #c792ea;
+  --mdpro-syntax-string: #ecc48d;
+  --mdpro-syntax-number: #f78c6c;
+}
+
+/* ---- Ayu Dark ---- */
+body[data-theme="ayu-dark"],
+body[data-theme="ayu-dark"] .milkdown {
+  --crepe-color-background: #0b0e14;
+  --crepe-color-on-background: #bfbdb6;
+  --crepe-color-surface: #131923;
+  --crepe-color-on-surface-variant: #8f97a3;
+  --crepe-color-outline: #303846;
+  --crepe-color-primary: #59c2ff;
+  --crepe-color-inline-code: #e6b450;
+  --crepe-color-error: #f07178;
+  --mdpro-heading-color: #e6b450;
+  --mdpro-syntax-keyword: #ff8f40;
+  --mdpro-syntax-string: #aad94c;
+  --mdpro-syntax-number: #d2a6ff;
+}
+
+/* ---- Catppuccin Macchiato ---- */
+body[data-theme="catppuccin-macchiato"],
+body[data-theme="catppuccin-macchiato"] .milkdown {
+  --crepe-color-background: #24273a;
+  --crepe-color-on-background: #cad3f5;
+  --crepe-color-surface: #363a4f;
+  --crepe-color-on-surface-variant: #b8c0e0;
+  --crepe-color-outline: #5b6078;
+  --crepe-color-primary: #8aadf4;
+  --crepe-color-inline-code: #f0c6c6;
+  --crepe-color-error: #ed8796;
+  --mdpro-heading-color: #c6a0f6;
+  --mdpro-syntax-keyword: #c6a0f6;
+  --mdpro-syntax-string: #a6da95;
+  --mdpro-syntax-number: #f5a97f;
+}
+
+/* ---- Rosé Pine Moon ---- */
+body[data-theme="rose-pine-moon"],
+body[data-theme="rose-pine-moon"] .milkdown {
+  --crepe-color-background: #232136;
+  --crepe-color-on-background: #e0def4;
+  --crepe-color-surface: #2a273f;
+  --crepe-color-on-surface-variant: #a9a4bf;
+  --crepe-color-outline: #56526e;
+  --crepe-color-primary: #9ccfd8;
+  --crepe-color-inline-code: #ea9a97;
+  --crepe-color-error: #eb6f92;
+  --mdpro-heading-color: #c4a7e7;
+  --mdpro-syntax-keyword: #c4a7e7;
+  --mdpro-syntax-string: #f6c177;
+  --mdpro-syntax-number: #ea9a97;
+}
+
+/* ---- Kanagawa Wave ---- */
+body[data-theme="kanagawa-wave"],
+body[data-theme="kanagawa-wave"] .milkdown {
+  --crepe-color-background: #1f1f28;
+  --crepe-color-on-background: #dcd7ba;
+  --crepe-color-surface: #2a2a37;
+  --crepe-color-on-surface-variant: #a3a19a;
+  --crepe-color-outline: #54546d;
+  --crepe-color-primary: #7fb4ca;
+  --crepe-color-inline-code: #e6c384;
+  --crepe-color-error: #ff7b7f;
+  --mdpro-heading-color: #e6c384;
+  --mdpro-syntax-keyword: #b8a0df;
+  --mdpro-syntax-string: #98bb6c;
+  --mdpro-syntax-number: #ffa066;
+}
+
+/* ---- Light Owl ---- */
+body[data-theme="light-owl"],
+body[data-theme="light-owl"] .milkdown {
+  --crepe-color-background: #fbfbfb;
+  --crepe-color-on-background: #403f53;
+  --crepe-color-surface: #f0f1f5;
+  --crepe-color-on-surface-variant: #626777;
+  --crepe-color-outline: #d4d8e2;
+  --crepe-color-primary: #285bb3;
+  --crepe-color-inline-code: #00766f;
+  --crepe-color-error: #b42334;
+  --mdpro-heading-color: #285bb3;
+  --mdpro-syntax-keyword: #9143ba;
+  --mdpro-syntax-string: #285bb3;
+  --mdpro-syntax-number: #aa0982;
+}
+
+/* ---- Quiet Light ---- */
+body[data-theme="quiet-light"],
+body[data-theme="quiet-light"] .milkdown {
+  --crepe-color-background: #f5f5f5;
+  --crepe-color-on-background: #333333;
+  --crepe-color-surface: #ededf5;
+  --crepe-color-on-surface-variant: #62646c;
+  --crepe-color-outline: #c9c9d4;
+  --crepe-color-primary: #405cb3;
+  --crepe-color-inline-code: #84521e;
+  --crepe-color-error: #aa3731;
+  --mdpro-heading-color: #aa3731;
+  --mdpro-syntax-keyword: #405cb3;
+  --mdpro-syntax-string: #386e20;
+  --mdpro-syntax-number: #925420;
+}
+
+/* ---- PaperColor Light ---- */
+body[data-theme="papercolor-light"],
+body[data-theme="papercolor-light"] .milkdown {
+  --crepe-color-background: #eeeeee;
+  --crepe-color-on-background: #444444;
+  --crepe-color-surface: #e4e4e4;
+  --crepe-color-on-surface-variant: #626262;
+  --crepe-color-outline: #bcbcbc;
+  --crepe-color-primary: #005faf;
+  --crepe-color-inline-code: #87005f;
+  --crepe-color-error: #b30000;
+  --mdpro-heading-color: #8700af;
+  --mdpro-syntax-keyword: #8700af;
+  --mdpro-syntax-string: #005f00;
+  --mdpro-syntax-number: #875000;
+}
+
+/* ---- Material Lighter ---- */
+body[data-theme="material-lighter"],
+body[data-theme="material-lighter"] .milkdown {
+  --crepe-color-background: #fafafa;
+  --crepe-color-on-background: #455a64;
+  --crepe-color-surface: #f0f0f0;
+  --crepe-color-on-surface-variant: #616b73;
+  --crepe-color-outline: #d1d5da;
+  --crepe-color-primary: #006b75;
+  --crepe-color-inline-code: #a13b30;
+  --crepe-color-error: #b32d32;
+  --mdpro-heading-color: #673ab7;
+  --mdpro-syntax-keyword: #673ab7;
+  --mdpro-syntax-string: #436b18;
+  --mdpro-syntax-number: #a13b30;
+}
+
+/* ---- Tokyo Night Day ---- */
+body[data-theme="tokyo-night-day"],
+body[data-theme="tokyo-night-day"] .milkdown {
+  --crepe-color-background: #e1e2e7;
+  --crepe-color-on-background: #343b58;
+  --crepe-color-surface: #d4d6e0;
+  --crepe-color-on-surface-variant: #515971;
+  --crepe-color-outline: #a9adc0;
+  --crepe-color-primary: #2454a3;
+  --crepe-color-inline-code: #a62a55;
+  --crepe-color-error: #9c2534;
+  --mdpro-heading-color: #65359b;
+  --mdpro-syntax-keyword: #65359b;
+  --mdpro-syntax-string: #345b23;
+  --mdpro-syntax-number: #8c4b16;
 }

@@ -19,7 +19,8 @@ export const THEMES: readonly ThemeDefinition[] = [
   { id: 'one-dark',         label: '$(symbol-color) One Dark',        description: "Atom's iconic dark theme" },
   { id: 'tokyo-night',      label: '$(symbol-color) Tokyo Night',     description: 'Inspired by Tokyo city lights' },
   { id: 'gruvbox-light',    label: '$(symbol-color) Gruvbox Light',   description: 'Retro groove light palette' },
-  { id: 'gruvbox-dark',     label: '$(symbol-color) Gruvbox Dark',    description: 'Retro groove dark palette' },  { id: 'catppuccin-mocha', label: '$(symbol-color) Catppuccin Mocha', description: 'Soothing pastel dark theme' },
+  { id: 'gruvbox-dark',     label: '$(symbol-color) Gruvbox Dark',    description: 'Retro groove dark palette' },
+  { id: 'catppuccin-mocha', label: '$(symbol-color) Catppuccin Mocha', description: 'Soothing pastel dark theme' },
   { id: 'catppuccin-latte', label: '$(symbol-color) Catppuccin Latte', description: 'Soothing pastel light theme' },
   { id: 'rose-pine',        label: '$(symbol-color) Rosé Pine',        description: 'Soho vibes for dark coding' },
   { id: 'rose-pine-dawn',   label: '$(symbol-color) Rosé Pine Dawn',   description: 'Rosé Pine for light backgrounds' },
@@ -30,7 +31,18 @@ export const THEMES: readonly ThemeDefinition[] = [
   { id: 'cobalt2',          label: '$(symbol-color) Cobalt2',          description: 'Vibrant orange on deep cobalt blue' },
   { id: 'one-light',        label: '$(symbol-color) One Light',        description: "Atom's One Light companion theme" },
   { id: 'ayu-light',        label: '$(symbol-color) Ayu Light',        description: 'Warm daylight palette by Ayu' },
-  { id: 'flexoki-light',    label: '$(symbol-color) Flexoki Light',    description: 'Ink-and-paper inspired warm light theme' },] as const;
+  { id: 'flexoki-light',    label: '$(symbol-color) Flexoki Light',    description: 'Ink-and-paper inspired warm light theme' },
+  { id: 'night-owl',        label: '$(symbol-color) Night Owl',        description: 'Dark navy with purple and cyan accents' },
+  { id: 'ayu-dark',         label: '$(symbol-color) Ayu Dark',         description: 'Deep dark palette with warm amber accents' },
+  { id: 'catppuccin-macchiato', label: '$(symbol-color) Catppuccin Macchiato', description: 'Soft indigo dark theme with pastel accents' },
+  { id: 'rose-pine-moon',   label: '$(symbol-color) Rosé Pine Moon',   description: 'Muted purple dark theme with rose and gold accents' },
+  { id: 'kanagawa-wave',    label: '$(symbol-color) Kanagawa Wave',    description: 'Ink-dark background with warm Japanese-inspired colors' },
+  { id: 'light-owl',        label: '$(symbol-color) Light Owl',        description: 'Light companion to Night Owl with violet and blue accents' },
+  { id: 'quiet-light',      label: '$(symbol-color) Quiet Light',      description: 'Soft gray light theme with subdued purple accents' },
+  { id: 'papercolor-light', label: '$(symbol-color) PaperColor Light', description: 'Paper-like light theme with crisp, saturated ink colors' },
+  { id: 'material-lighter', label: '$(symbol-color) Material Lighter', description: 'Clean light Material palette with teal and purple accents' },
+  { id: 'tokyo-night-day',  label: '$(symbol-color) Tokyo Night Day',  description: 'Cool gray light theme with blue and violet accents' },
+] as const;
 
 /** Read the persisted theme from configuration. */
 export function getActiveTheme(): string {

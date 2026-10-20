@@ -6,6 +6,10 @@
 graphify-out/**
 src/**
 webview/**
+tests/**
+test-results/**
+playwright-report/**
+playwright.config.ts
 node_modules/**
 esbuild.config.mjs
 tsconfig.json

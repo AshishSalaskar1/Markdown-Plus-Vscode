@@ -7,6 +7,8 @@ import { getNonce } from './nonce';
  * CSP includes `'unsafe-inline'` for `style-src` because ProseMirror
  * (used by Milkdown) injects inline styles for cursor positioning and
  * decorations.
+ * A nonced module entry plus strict-dynamic permits its local code-split
+ * imports without allowing arbitrary inline scripts or unsafe-eval.
  */
 export function getWebviewHtml(
   webview: vscode.Webview,
@@ -37,7 +39,7 @@ export function getWebviewHtml(
 <head>
   <meta charset="UTF-8">
   ${baseTag}
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource} https: data:; script-src 'nonce-${nonce}'; style-src ${cspSource} 'unsafe-inline'; font-src ${cspSource};">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${cspSource} https: data:; script-src 'nonce-${nonce}' 'strict-dynamic'; style-src ${cspSource} 'unsafe-inline'; font-src ${cspSource};">
   <link href="${styleUri}" rel="stylesheet" />
   <title>Markdown Pro</title>
 </head>
@@ -99,7 +101,7 @@ export function getWebviewHtml(
     </div>
     <div id="outline-list" class="mdpro-outline-list" role="tree"></div>
   </aside>
-  <script nonce="${nonce}" src="${scriptUri}"></script>
+  <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`;
 }

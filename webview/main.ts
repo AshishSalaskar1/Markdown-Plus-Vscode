@@ -6,7 +6,7 @@
  */
 
 import { Crepe } from "@milkdown/crepe";
-import { remarkStringifyOptionsCtx } from "@milkdown/core";
+import { remarkStringifyOptionsCtx, editorViewCtx, serializerCtx } from "@milkdown/core";
 import { replaceAll, callCommand } from "@milkdown/utils";
 import {
   toggleStrongCommand,
@@ -32,20 +32,24 @@ import "@milkdown/crepe/theme/frame.css";
 import "./styles/editor.css";
 import "./styles/themes.css";
 import { mermaidRenderPreview, setActiveTheme, initMermaidViewer, reRenderMermaidDiagrams } from './mermaid-plugin';
+import { SourceIndex } from './source-index';
+import { createFrameTask } from './frame-task';
+import { syntaxHighlighting } from '@codemirror/language';
+import { classHighlighter } from '@lezer/highlight';
+import { stabilizeTableCellSelection } from './table-view';
+import type { Node as ProseMirrorNode } from '@milkdown/prose/model';
+
+let refreshSourcePane: (() => void) | undefined;
+let refreshOutline: (() => void) | undefined;
 
 /**
- * Apply a theme by setting the `data-theme` attribute on both the
- * `.milkdown` container and the `<body>`. When the theme is "vscode",
- * remove the attribute so the default VS Code CSS variable mappings
- * from editor.css take effect.
+ * The body owns the theme so it survives Milkdown rebuilding its wrapper.
+ * Removing the attribute restores the host's VS Code tokens unchanged.
  */
 function applyTheme(themeId: string): void {
-  const milkdown = document.querySelector(".milkdown") as HTMLElement | null;
   if (themeId === "vscode") {
-    milkdown?.removeAttribute("data-theme");
     document.body.removeAttribute("data-theme");
   } else {
-    milkdown?.setAttribute("data-theme", themeId);
     document.body.setAttribute("data-theme", themeId);
   }
 }
@@ -154,6 +158,7 @@ function applyShowSource(show: boolean): void {
   }
   document.body.classList.toggle("source-visible", show);
   updateSourceButtonState(show);
+  if (show) refreshSourcePane?.();
 }
 
 /**
@@ -166,6 +171,7 @@ function applyShowOutline(show: boolean): void {
   }
   document.body.classList.toggle("outline-visible", show);
   updateOutlineButtonState(show);
+  if (show) refreshOutline?.();
 }
 
 interface ParsedDocument {
@@ -365,6 +371,7 @@ function restoreListMarkers(sourceMarkdown: string, markdown: string): string {
   }
 
   const normalizedLines: string[] = [];
+  let nextNonEmptyIndex = 0;
   for (let index = 0; index < newLines.length; index++) {
     const line = newLines[index];
 
@@ -374,13 +381,10 @@ function restoreListMarkers(sourceMarkdown: string, markdown: string): string {
     }
 
     const previousLine = normalizedLines[normalizedLines.length - 1] ?? "";
-    let nextNonEmptyLine = "";
-    for (let nextIndex = index + 1; nextIndex < newLines.length; nextIndex++) {
-      if (newLines[nextIndex].trim() !== "") {
-        nextNonEmptyLine = newLines[nextIndex];
-        break;
-      }
-    }
+    // Each blank run is scanned once, not once per blank line.
+    nextNonEmptyIndex = Math.max(nextNonEmptyIndex, index + 1);
+    while (nextNonEmptyIndex < newLines.length && newLines[nextNonEmptyIndex].trim() === "") nextNonEmptyIndex++;
+    const nextNonEmptyLine = newLines[nextNonEmptyIndex] ?? "";
 
     const previousUnorderedMatch = previousLine.match(/^(\s*)([-+*])(\s+.*)$/);
     const nextUnorderedMatch = nextNonEmptyLine.match(/^(\s*)([-+*])(\s+.*)$/);
@@ -546,12 +550,8 @@ function restoreTables(sourceMarkdown: string, markdown: string): string {
       }
     }
 
-    // Pass 3: position-based fallback — match Nth output table to Nth source table
-    if (!matched && oi < sourceTables.length && !usedSourceIndices.has(oi)) {
-      const sourceLines = sourceTables[oi].text.split(/\r?\n/);
-      lines.splice(outputTable.startIndex, outputTable.endIndex - outputTable.startIndex + 1, ...sourceLines);
-      usedSourceIndices.add(oi);
-    }
+    // If the contents changed, retain the serializer's edited table. Restoring
+    // an unmatched table by position would silently discard cell/row edits.
   }
 
   return lines.join(eol);
@@ -676,6 +676,7 @@ function renderFrontmatterPanel(frontmatter: string): void {
   }
 
   panel.classList.remove("hidden");
+  if (input.value === frontmatter) return;
   input.value = frontmatter;
   autoSizeFrontmatterInput(input);
 }
@@ -1205,7 +1206,7 @@ function toggleSource(): void {
   applyShowSource(pane.classList.contains("hidden"));
 }
 
-// Wrap in async IIFE — esbuild IIFE format does not support top-level await.
+// Initialise asynchronously while keeping editor state scoped to this webview.
 (async () => {
   // -------------------------------------------------------------------
   // VS Code API & sync state
@@ -1230,6 +1231,10 @@ function toggleSource(): void {
   let syncingSourceScroll = false;
   let syncedBlock: HTMLElement | null = null;
   let lastSourceInputTime = 0;
+  let lastSyncedRichDoc: ProseMirrorNode | null = null;
+  let lastSyncedFrontmatter = '';
+  let lastPostedEdit: { type: 'edit'; markdown: string; version: number; flush?: boolean } | null = null;
+  let lastFlushedVersion = 0;
 
   const DEBOUNCE_TYPING = 150;
   const DEBOUNCE_IDLE = 50;
@@ -1283,6 +1288,14 @@ function toggleSource(): void {
     hasPendingUserChange = true;
   }
 
+  function markRichUserInitiatedChange(): void {
+    // An explicit rich/diagram edit takes precedence over the source pane's
+    // short protection window. Otherwise switching panes can silently delay it.
+    lastSourceInputTime = 0;
+    pendingSourceToRichUpdate = false;
+    markUserInitiatedChange();
+  }
+
   function serializeCurrentDocument(bodyMarkdown: string): string {
     const serializedMarkdown = normalizeMarkdownForStorage(
       combineMarkdownDocument(currentFrontmatter, bodyMarkdown),
@@ -1301,17 +1314,44 @@ function toggleSource(): void {
     debounceTimer = null;
   }
 
-  function commitDocumentSync(): void {
+  function commitDocumentSync(flush = false): void {
     if (!hasPendingUserChange) {
       return;
     }
 
     hasPendingUserChange = false;
     const isSourceEdit = hasPendingSourceChange;
+    let bodyChanged = false;
+    if (!isSourceEdit) {
+      const doc = crepe.editor.action((ctx) => ctx.get(editorViewCtx).state.doc);
+      // A potential editing key (e.g. Ctrl+B changing stored marks) is not
+      // necessarily a document edit. Do not normalize untouched Markdown just
+      // because focus leaves the editor before a document-update callback.
+      bodyChanged = !lastSyncedRichDoc?.eq(doc);
+      if (!bodyChanged && currentFrontmatter === lastSyncedFrontmatter) return;
+      // Serialize the latest editor state once, after typing settles. Listening
+      // to markdownUpdated would serialize every queued Milkdown transaction.
+      if (bodyChanged) {
+        crepe.editor.action((ctx) => {
+          currentBodyMarkdown = ctx.get(serializerCtx)(doc);
+        });
+      }
+      lastSyncedRichDoc = doc;
+    }
     const serializedMarkdown = isSourceEdit
       ? sourceInput?.value ?? sourceMarkdown
-      : serializeCurrentDocument(currentBodyMarkdown);
+      : bodyChanged
+        ? serializeCurrentDocument(currentBodyMarkdown)
+        // Metadata-only edits must not round-trip untouched body syntax
+        // through Milkdown or its formatting-preservation passes.
+        : normalizeMarkdownForStorage(
+          combineMarkdownDocument(currentFrontmatter, currentBodyMarkdown), currentEol, hasTrailingNewline,
+        );
     hasPendingSourceChange = false;
+    lastSyncedFrontmatter = currentFrontmatter;
+    if (isSourcePaneVisible() && !isSourceEdit) {
+      setSourceValuePreservingEditorState(serializedMarkdown);
+    }
 
     // Skip posting if the serialized output is identical to the source —
     // this prevents silent modifications when no real edit was made.
@@ -1320,11 +1360,14 @@ function toggleSource(): void {
     }
 
     currentVersion++;
-    vscode.postMessage({
+    lastPostedEdit = {
       type: "edit",
       markdown: serializedMarkdown,
       version: currentVersion,
-    });
+      ...(flush ? { flush: true } : {}),
+    };
+    if (flush) lastFlushedVersion = currentVersion;
+    vscode.postMessage(lastPostedEdit);
     sourceMarkdown = serializedMarkdown;
   }
 
@@ -1335,7 +1378,14 @@ function toggleSource(): void {
    */
   function flushDocumentSync(): void {
     cancelDocumentSync();
-    commitDocumentSync();
+    commitDocumentSync(true);
+    // A normal edit may already be in transit when VS Code marks the panel
+    // inactive. Retry it once as a final flush; the host rejects version replays
+    // if it already applied it or a newer external update superseded it.
+    if (lastPostedEdit && lastPostedEdit.version > lastFlushedVersion) {
+      lastFlushedVersion = lastPostedEdit.version;
+      vscode.postMessage({ ...lastPostedEdit, flush: true });
+    }
   }
 
   function scheduleDocumentSync(): void {
@@ -1358,39 +1408,16 @@ function toggleSource(): void {
     }, delay);
   }
 
-  interface SourceBlock {
-    start: number;
-    end: number;
-  }
-
-  /** Map source lines to top-level Markdown blocks for cross-pane navigation. */
-  function getSourceBlocks(markdown: string): SourceBlock[] {
-    const lines = markdown.split(/\r?\n/);
-    const blocks: SourceBlock[] = [];
-    let start = -1;
-    let inFence = false;
-
-    for (let line = 0; line < lines.length; line++) {
-      if (/^\s*(```|~~~)/.test(lines[line])) inFence = !inFence;
-      if (lines[line].trim() && start === -1) start = line;
-      const nextIsBlank = line === lines.length - 1 || !lines[line + 1].trim();
-      if (start !== -1 && !inFence && nextIsBlank) {
-        blocks.push({ start, end: line });
-        start = -1;
-      }
-    }
-
-    return blocks.length ? blocks : [{ start: 0, end: Math.max(0, lines.length - 1) }];
+  const sourceIndex = new SourceIndex();
+  function getSourceIndex(): SourceIndex {
+    sourceIndex.update(sourceInput?.value ?? sourceMarkdown);
+    return sourceIndex;
   }
 
   function getRichBlocks(): HTMLElement[] {
     const root = document.querySelector<HTMLElement>(".milkdown .ProseMirror");
     if (!root) return [];
     return Array.from(root.children).filter((element): element is HTMLElement => element instanceof HTMLElement);
-  }
-
-  function lineForOffset(text: string, offset: number): number {
-    return text.slice(0, offset).split(/\r?\n/).length - 1;
   }
 
   let charWidthCacheKey = "";
@@ -1427,36 +1454,14 @@ function toggleSource(): void {
     return { rowHeight, charsPerRow };
   }
 
-  function rowsBeforeLine(text: string, line: number, charsPerRow: number): number {
-    const lines = text.split(/\r?\n/);
-    let rows = 0;
-    for (let index = 0; index < Math.min(line, lines.length); index++) {
-      rows += Math.max(1, Math.ceil(lines[index].length / charsPerRow));
-    }
-    return rows;
-  }
-
-  function lineForRow(text: string, row: number, charsPerRow: number): number {
-    const lines = text.split(/\r?\n/);
-    let rows = 0;
-    for (let index = 0; index < lines.length; index++) {
-      rows += Math.max(1, Math.ceil(lines[index].length / charsPerRow));
-      if (rows > row) return index;
-    }
-    return Math.max(0, lines.length - 1);
-  }
-
   function blockIndexForLine(line: number): number {
-    const blocks = getSourceBlocks(sourceInput?.value ?? sourceMarkdown);
-    const exact = blocks.findIndex((block) => line >= block.start && line <= block.end);
-    if (exact >= 0) return exact;
-    return blocks.reduce((nearest, block, index) =>
-      Math.abs(block.start - line) < Math.abs(blocks[nearest].start - line) ? index : nearest, 0);
+    return getSourceIndex().blockIndexForLine(line);
   }
 
   function setSyncedRichBlock(index: number, shouldScroll: boolean): void {
     const blocks = getRichBlocks();
     const block = blocks[Math.min(index, Math.max(0, blocks.length - 1))];
+    if (syncedBlock === block && !shouldScroll) return;
     syncedBlock?.classList.remove("mdpro-synced-block");
     syncedBlock = block ?? null;
     block?.classList.add("mdpro-synced-block");
@@ -1465,7 +1470,7 @@ function toggleSource(): void {
 
   function syncRichFromSource(shouldScroll: boolean): void {
     if (!sourceInput) return;
-    setSyncedRichBlock(blockIndexForLine(lineForOffset(sourceInput.value, sourceInput.selectionStart)), shouldScroll);
+    setSyncedRichBlock(blockIndexForLine(getSourceIndex().lineForOffset(sourceInput.selectionStart)), shouldScroll);
   }
 
   function syncSourceFromRich(target: EventTarget | null): void {
@@ -1473,7 +1478,7 @@ function toggleSource(): void {
     const block = (target as HTMLElement | null)?.closest<HTMLElement>(".ProseMirror > *");
     const index = getRichBlocks().indexOf(block!);
     if (index < 0) return;
-    const blocks = getSourceBlocks(sourceInput.value);
+    const blocks = getSourceIndex().blocks;
     const sourceBlock = blocks[Math.min(index, blocks.length - 1)];
     if (!sourceBlock) return;
 
@@ -1483,7 +1488,7 @@ function toggleSource(): void {
     const metrics = sourceRowMetrics();
     if (!metrics) return;
     const blockTop =
-      rowsBeforeLine(sourceInput.value, sourceBlock.start, metrics.charsPerRow) * metrics.rowHeight;
+      getSourceIndex().rowsBeforeLine(sourceBlock.start, metrics.charsPerRow) * metrics.rowHeight;
     syncingSourceScroll = true;
     sourceInput.scrollTop = Math.max(0, blockTop - sourceInput.clientHeight / 2);
     requestAnimationFrame(() => { syncingSourceScroll = false; });
@@ -1531,13 +1536,13 @@ function toggleSource(): void {
   function renderOutline(entries: OutlineEntry[]): void {
     const list = document.getElementById("outline-list");
     if (!list) return;
-    list.innerHTML = "";
+    const fragment = document.createDocumentFragment();
 
     if (entries.length === 0) {
       const empty = document.createElement("div");
       empty.className = "outline-empty";
       empty.textContent = "No headings yet";
-      list.appendChild(empty);
+      list.replaceChildren(empty);
       return;
     }
 
@@ -1549,15 +1554,19 @@ function toggleSource(): void {
       button.dataset.ordinal = String(entry.ordinal);
       button.title = entry.text;
       button.textContent = entry.text;
-      list.appendChild(button);
+      fragment.appendChild(button);
     }
+    list.replaceChildren(fragment);
   }
 
   let outlineDebounce: number | undefined;
   let outlineRenderedKey = "";
   function scheduleOutlineRebuild(): void {
     if (outlineDebounce) window.clearTimeout(outlineDebounce);
+    if (document.getElementById("outline")?.classList.contains("hidden") || document.hidden) return;
     outlineDebounce = window.setTimeout(() => {
+      outlineDebounce = undefined;
+      if (document.getElementById("outline")?.classList.contains("hidden") || document.hidden) return;
       const entries = extractOutlineFromDom();
       const key = entries.map((e) => `${e.level}\t${e.text}`).join("\n");
       if (key === outlineRenderedKey) return;
@@ -1618,25 +1627,32 @@ function toggleSource(): void {
 
     let startX = 0;
     let startWidth = 0;
+    let pendingWidth = 0;
+    const resize = createFrameTask(() => {
+      document.documentElement.style.setProperty("--mdpro-outline-width", `${pendingWidth}px`);
+    });
 
     const onMove = (e: PointerEvent) => {
       // Panel is anchored on the right edge, so moving the cursor LEFT
       // increases width.
       const delta = startX - e.clientX;
-      const next = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + delta));
-      document.documentElement.style.setProperty("--mdpro-outline-width", `${next}px`);
+      pendingWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startWidth + delta));
+      resize.schedule();
     };
 
     const onUp = (e: PointerEvent) => {
+      resize.flush();
       handle.classList.remove("dragging");
-      handle.releasePointerCapture?.(e.pointerId);
+      if (handle.hasPointerCapture(e.pointerId)) handle.releasePointerCapture(e.pointerId);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
       const current = parseInt(getComputedStyle(outline).width, 10);
       try { window.localStorage.setItem(OUTLINE_STORAGE_KEY, String(current)); } catch { /* ignore */ }
     };
 
     handle.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
       e.preventDefault();
       startX = e.clientX;
       startWidth = parseInt(getComputedStyle(outline).width, 10) || 280;
@@ -1644,6 +1660,7 @@ function toggleSource(): void {
       handle.setPointerCapture?.(e.pointerId);
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onUp);
     });
   }
 
@@ -1680,23 +1697,30 @@ function toggleSource(): void {
 
     let startX = 0;
     let startWidth = 0;
+    let pendingWidth = 0;
+    const resize = createFrameTask(() => {
+      document.documentElement.style.setProperty("--mdpro-source-width", `${pendingWidth}px`);
+    });
 
     const onMove = (e: PointerEvent) => {
-      const next = clamp(startWidth + (startX - e.clientX));
-      document.documentElement.style.setProperty("--mdpro-source-width", `${next}px`);
+      pendingWidth = clamp(startWidth + (startX - e.clientX));
+      resize.schedule();
     };
 
     const onUp = (e: PointerEvent) => {
+      resize.flush();
       handle.classList.remove("dragging");
       document.body.classList.remove("mdpro-resizing");
-      handle.releasePointerCapture?.(e.pointerId);
+      if (handle.hasPointerCapture(e.pointerId)) handle.releasePointerCapture(e.pointerId);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
       const current = Math.round(pane.getBoundingClientRect().width);
       try { window.localStorage.setItem(SOURCE_STORAGE_KEY, String(current)); } catch { /* ignore */ }
     };
 
     handle.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
       e.preventDefault();
       startX = e.clientX;
       startWidth = pane.getBoundingClientRect().width;
@@ -1705,6 +1729,7 @@ function toggleSource(): void {
       handle.setPointerCapture?.(e.pointerId);
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onUp);
     });
 
     // Double-click resets to the default split.
@@ -1727,6 +1752,13 @@ function toggleSource(): void {
     featureConfigs: {
       [Crepe.Feature.CodeMirror]: {
         renderPreview: mermaidRenderPreview,
+        // Crepe otherwise applies One Dark syntax colors even on light themes.
+        // Stable token classes let CSS change the palette without recreating
+        // editors, their selection, or undo state when the theme changes.
+        // An extension wrapper avoids Crepe's deep-default merge filling an
+        // empty array with its default One Dark extensions.
+        theme: { extension: [] },
+        extensions: [syntaxHighlighting(classHighlighter)],
       },
     },
   });
@@ -1755,12 +1787,13 @@ function toggleSource(): void {
   });
 
   await crepe.create();
+  crepe.editor.action((ctx) => stabilizeTableCellSelection(ctx.get(editorViewCtx)));
 
   // -------------------------------------------------------------------
   // Toolbar: build and wire buttons
   // -------------------------------------------------------------------
 
-  buildToolbar(crepe, markUserInitiatedChange);
+  buildToolbar(crepe, markRichUserInitiatedChange);
 
   // Keep --mdpro-toolbar-height in sync (the toolbar wraps at narrow widths).
   updateToolbarHeightVar();
@@ -1796,6 +1829,40 @@ function toggleSource(): void {
   }
 
   if (sourceInput) {
+    const updateRichFromSource = () => {
+      sourceToRichTimer = null;
+      // Milkdown reports document updates asynchronously. Do not let that
+      // echo write a normalized value back into this textarea.
+      pendingSourceToRichUpdate = true;
+      if (pendingSourceToRichReset) clearTimeout(pendingSourceToRichReset);
+      pendingSourceToRichReset = setTimeout(() => {
+        pendingSourceToRichUpdate = false;
+        pendingSourceToRichReset = null;
+      }, 500);
+      const hadFocus = document.activeElement === sourceInput;
+      const selectionStart = sourceInput.selectionStart;
+      const selectionEnd = sourceInput.selectionEnd;
+      const selectionDirection = sourceInput.selectionDirection;
+      const scrollTop = sourceInput.scrollTop;
+      const scrollLeft = sourceInput.scrollLeft;
+      suppressOnChange = true;
+      crepe.editor.action(replaceAll(currentBodyMarkdown));
+      lastSyncedRichDoc = crepe.editor.action((ctx) => ctx.get(editorViewCtx).state.doc);
+      lastSyncedFrontmatter = currentFrontmatter;
+      requestAnimationFrame(() => {
+        suppressOnChange = false;
+        if (!hadFocus) return;
+        // replaceAll can steal focus; restore the native textarea state.
+        sourceInput.focus({ preventScroll: true });
+        sourceInput.setSelectionRange(
+          Math.min(selectionStart, sourceInput.value.length),
+          Math.min(selectionEnd, sourceInput.value.length),
+          selectionDirection,
+        );
+        sourceInput.scrollTop = scrollTop;
+        sourceInput.scrollLeft = scrollLeft;
+      });
+    };
     sourceInput.addEventListener("input", () => {
       lastSourceInputTime = Date.now();
       const markdown = sourceInput.value;
@@ -1813,39 +1880,7 @@ function toggleSource(): void {
       // rich pane waits until typing pauses, so the native textarea keeps its
       // cursor and scroll position while the user is actively editing.
       if (sourceToRichTimer) clearTimeout(sourceToRichTimer);
-      sourceToRichTimer = setTimeout(() => {
-        sourceToRichTimer = null;
-        // Milkdown reports `markdownUpdated` asynchronously. Do not let that
-        // echo write a normalized value back into this textarea.
-        pendingSourceToRichUpdate = true;
-        if (pendingSourceToRichReset) clearTimeout(pendingSourceToRichReset);
-        pendingSourceToRichReset = setTimeout(() => {
-          pendingSourceToRichUpdate = false;
-          pendingSourceToRichReset = null;
-        }, 500);
-        const hadFocus = document.activeElement === sourceInput;
-        const selectionStart = sourceInput.selectionStart;
-        const selectionEnd = sourceInput.selectionEnd;
-        const selectionDirection = sourceInput.selectionDirection;
-        const scrollTop = sourceInput.scrollTop;
-        const scrollLeft = sourceInput.scrollLeft;
-        suppressOnChange = true;
-        crepe.editor.action(replaceAll(currentBodyMarkdown));
-        requestAnimationFrame(() => {
-          suppressOnChange = false;
-          if (!hadFocus) return;
-          // `replaceAll` rebuilds the ProseMirror document and can steal
-          // focus, so put the caret back exactly where the user left it.
-          sourceInput.focus({ preventScroll: true });
-          sourceInput.setSelectionRange(
-            Math.min(selectionStart, sourceInput.value.length),
-            Math.min(selectionEnd, sourceInput.value.length),
-            selectionDirection,
-          );
-          sourceInput.scrollTop = scrollTop;
-          sourceInput.scrollLeft = scrollLeft;
-        });
-      }, DEBOUNCE_SOURCE_TO_RICH);
+      sourceToRichTimer = setTimeout(updateRichFromSource, DEBOUNCE_SOURCE_TO_RICH);
       hasPendingSourceChange = true;
       markUserInitiatedChange();
       syncRichFromSource(false);
@@ -1853,10 +1888,22 @@ function toggleSource(): void {
       scheduleDocumentSync();
     });
 
+    sourceInput.addEventListener('blur', () => {
+      // Commit raw text before another pane can edit the rich document. Apply
+      // its pending render now, so a delayed source timer cannot overwrite the
+      // first rich-text/diagram edits after a quick pane switch.
+      cancelDocumentSync();
+      commitDocumentSync();
+      if (sourceToRichTimer) {
+        clearTimeout(sourceToRichTimer);
+        updateRichFromSource();
+      }
+    });
+
     sourceInput.addEventListener("click", () => syncRichFromSource(true));
     sourceInput.addEventListener("keyup", () => syncRichFromSource(false));
     sourceInput.addEventListener("select", () => syncRichFromSource(false));
-    sourceInput.addEventListener("scroll", () => {
+    const sourceScroll = createFrameTask(() => {
       // Typing near the bottom of the textarea makes the browser scroll it
       // automatically. Treating that as a user scroll would scroll-sync the
       // rich pane and yank the view away mid-keystroke.
@@ -1864,24 +1911,39 @@ function toggleSource(): void {
       const metrics = sourceRowMetrics();
       if (!metrics) return;
       const topRow = Math.floor(sourceInput.scrollTop / metrics.rowHeight);
-      const visibleLine = lineForRow(sourceInput.value, topRow, metrics.charsPerRow);
+      const visibleLine = getSourceIndex().lineForRow(topRow, metrics.charsPerRow);
       setSyncedRichBlock(blockIndexForLine(visibleLine), true);
     });
+    sourceInput.addEventListener("scroll", () => sourceScroll.schedule(), { passive: true });
   }
 
   editorRoot?.addEventListener("beforeinput", () => {
-    markUserInitiatedChange();
+    markRichUserInitiatedChange();
+  }, true);
+  editorRoot?.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || !(event.target instanceof Element)) return;
+    const label = event.target.closest('.label-wrapper');
+    // Task toggles dispatch a ProseMirror transaction directly; they do not
+    // emit beforeinput/keydown like text edits. Mark the intent in capture
+    // phase before Milkdown's checkbox handler stops propagation.
+    if (label?.querySelector('.label.checked, .label.unchecked')) {
+      markRichUserInitiatedChange();
+    } else if (event.target.closest('.milkdown-table-block button, .milkdown-toolbar .toolbar-item')) {
+      // Component actions may dispatch transactions without a text input event.
+      // The document-equality guard prevents selection-only clicks from saving.
+      markRichUserInitiatedChange();
+    }
   }, true);
   editorRoot?.addEventListener("keydown", (event) => {
     if (isPotentialEditingKey(event)) {
-      markUserInitiatedChange();
+      markRichUserInitiatedChange();
     }
   }, true);
   editorRoot?.addEventListener("paste", () => {
-    markUserInitiatedChange();
+    markRichUserInitiatedChange();
   }, true);
   editorRoot?.addEventListener("drop", () => {
-    markUserInitiatedChange();
+    markRichUserInitiatedChange();
   }, true);
   editorRoot?.addEventListener("click", (event) => {
     syncSourceFromRich(event.target);
@@ -1891,6 +1953,8 @@ function toggleSource(): void {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "visible") {
       flushDocumentSync();
+    } else {
+      scheduleOutlineRebuild();
     }
   });
 
@@ -1907,8 +1971,8 @@ function toggleSource(): void {
   // -------------------------------------------------------------------
 
   crepe.on((listener: any) => {
-    listener.markdownUpdated((_ctx: any, markdown: string, prevMarkdown: string) => {
-      if (suppressOnChange || markdown === prevMarkdown) {
+    listener.updated(() => {
+      if (suppressOnChange) {
         if (suppressOnChange && pendingSourceToRichUpdate) {
           pendingSourceToRichUpdate = false;
           if (pendingSourceToRichReset) clearTimeout(pendingSourceToRichReset);
@@ -1931,14 +1995,17 @@ function toggleSource(): void {
         return;
       }
 
-      currentBodyMarkdown = markdown;
-      if (sourceInput) {
-        setSourceValuePreservingEditorState(serializeCurrentDocument(markdown));
-      }
       scheduleOutlineRebuild();
-      scheduleDocumentSync();
+      if (hasPendingUserChange) scheduleDocumentSync();
     });
   });
+
+  refreshSourcePane = () => {
+    cancelDocumentSync();
+    commitDocumentSync();
+    setSourceValuePreservingEditorState(sourceMarkdown);
+  };
+  refreshOutline = scheduleOutlineRebuild;
 
   // -------------------------------------------------------------------
   // Incoming: extension host → webview  (init / update / themeChange)
@@ -1954,7 +2021,13 @@ function toggleSource(): void {
         sourceToRichTimer = null;
       }
       currentVersion = version;
+      lastPostedEdit = null;
       hasPendingUserChange = false;
+      hasPendingSourceChange = false;
+      pendingSourceToRichUpdate = false;
+      if (pendingSourceToRichReset) clearTimeout(pendingSourceToRichReset);
+      pendingSourceToRichReset = null;
+      lastSourceInputTime = 0;
       currentEol = detectLineEnding(markdown);
       hasTrailingNewline = markdown.endsWith("\n");
       sourceMarkdown = normalizeMarkdownForStorage(markdown, currentEol, hasTrailingNewline);
@@ -1999,8 +2072,12 @@ function toggleSource(): void {
       renderFrontmatterPanel(currentFrontmatter);
 
       suppressOnChange = true;
-      crepe.editor.action(replaceAll(currentBodyMarkdown));
-      // Defer clearing suppress to catch any async markdownUpdated events
+      // Initial loading is not a user edit: create the starting state directly
+      // instead of retaining a whole-document replacement in undo history.
+      crepe.editor.action(replaceAll(currentBodyMarkdown, type === "init"));
+      lastSyncedRichDoc = crepe.editor.action((ctx) => ctx.get(editorViewCtx).state.doc);
+      lastSyncedFrontmatter = currentFrontmatter;
+      // Defer clearing suppress to catch any async document-update events
       // fired by Milkdown plugins/decorations after replaceAll completes.
       hasPendingUserChange = false;
       requestAnimationFrame(() => { suppressOnChange = false; });
@@ -2057,7 +2134,7 @@ function toggleSource(): void {
   //
   // Undo / Redo:
   //   - Ctrl+Z / Ctrl+Y are handled by ProseMirror's history plugin
-  //     inside the webview.  Each undo fires `markdownUpdated`, which
+  //     inside the webview. Each undo fires a document-update callback, which
   //     propagates the change to the extension host as a WorkspaceEdit.
   //   - VS Code's document-level undo operates on WorkspaceEdits,
   //     which is a separate undo stack.  Because the webview iframe
